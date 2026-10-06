@@ -1,0 +1,6 @@
+{
+  "name": "Ministry Organizer",
+  "description": "A calm, map-driven digital field journal and organization tool for ministry follow-ups, visits, and territories.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
