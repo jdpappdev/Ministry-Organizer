@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, User, MapPin, BookOpen, Map, ArrowRight } from 'lucide-react';
 import { Person, Visit, Territory } from '../../types';
 import { EditorialDate } from '../common/EditorialDate';
-import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
+import { FloatingCardModal } from '../common/BottomSheet';
 
 interface GlobalSearchModalProps {
   isOpen: boolean;
@@ -26,8 +26,6 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useBodyScrollLock(isOpen);
-
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 50);
@@ -35,21 +33,6 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
       setQuery('');
     }
   }, [isOpen]);
-
-  // Handle ESC key press
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -79,8 +62,9 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
     ? territories.filter(
         (t) =>
           t.name.toLowerCase().includes(q) ||
-          t.code?.toLowerCase().includes(q) ||
-          t.description?.toLowerCase().includes(q)
+          (t.code && t.code.toLowerCase().includes(q)) ||
+          t.description?.toLowerCase().includes(q) ||
+          t.boundaryNotes?.toLowerCase().includes(q)
       )
     : [];
 
@@ -88,53 +72,47 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
     matchedPeople.length > 0 || matchedVisits.length > 0 || matchedTerritories.length > 0;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-16 md:pt-24 bg-[#102C29]/40 backdrop-blur-xs cursor-default"
-      onClick={onClose}
+    <FloatingCardModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Search Records"
+      subtitle="Find people, conversations, or territories"
+      noPadding
     >
-      <div
-        className="relative w-full max-w-2xl bg-[#FCFBF8] border border-[#DCDDD5] rounded-[18px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 cursor-auto"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Global Search"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="flex flex-col">
         {/* Search Input Bar */}
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[#DCDDD5] bg-white">
-          <Search className="w-5 h-5 text-[#68716D] shrink-0" />
+        <div className="flex items-center gap-3 px-5 py-3.5 border-b border-[#E6E0D2] bg-[#F5F1E8]">
+          <Search className="w-5 h-5 text-[#5F6B66] shrink-0" />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search people, territories, topics..."
-            className="w-full text-sm bg-transparent placeholder-[#68716D] text-[#17201E] focus:outline-none"
+            className="w-full text-sm bg-transparent placeholder-[#5F6B66] text-[#1B2421] focus:outline-none font-medium"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="p-1 text-[#68716D] hover:text-[#17201E]"
+              className="p-1 text-[#5F6B66] hover:text-[#1B2421] cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
           )}
-          <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono text-[#68716D] bg-[#F5F3ED] border border-[#DCDDD5] rounded">
-            ESC
-          </kbd>
         </div>
 
         {/* Results Area */}
-        <div className="max-h-[60vh] overflow-y-auto p-4 space-y-4">
+        <div className="max-h-[50vh] overflow-y-auto p-4 space-y-4">
           {!q && (
-            <div className="py-8 text-center text-xs text-[#68716D]">
-              <p className="font-medium text-[#17201E] mb-1">Search the Ministry Journal</p>
+            <div className="py-8 text-center text-xs text-[#5F6B66]">
+              <p className="font-semibold text-[#1B2421] mb-1">Search the Ministry Journal</p>
               <p>Find records by person name, conversation topic, or territory</p>
             </div>
           )}
 
           {q && !hasResults && (
-            <div className="py-8 text-center text-xs text-[#68716D]">
-              <p className="font-medium text-[#17201E] mb-1">No matching records found</p>
+            <div className="py-8 text-center text-xs text-[#5F6B66]">
+              <p className="font-semibold text-[#1B2421] mb-1">No matching records found</p>
               <p>Try searching for a different keyword or check spelling</p>
             </div>
           )}
@@ -142,10 +120,10 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
           {/* People Results */}
           {matchedPeople.length > 0 && (
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-[#68716D] px-2 mb-1.5">
+              <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#5F6B66] px-2 mb-2">
                 People ({matchedPeople.length})
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {matchedPeople.map((person) => {
                   const terr = territories.find((t) => t.id === person.territoryId);
                   return (
@@ -155,17 +133,17 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                         onSelectPerson(person.id);
                         onClose();
                       }}
-                      className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-[#F5F3ED] text-left transition-colors group"
+                      className="w-full flex items-center justify-between p-3 rounded-[14px] bg-white border border-[#E6E0D2] hover:border-[#1F3D36] text-left transition-colors group cursor-pointer"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-7 h-7 rounded-md bg-[#183A35]/8 flex items-center justify-center text-[#183A35] shrink-0">
+                        <div className="w-8 h-8 rounded-xl bg-[#1F3D36]/10 flex items-center justify-center text-[#1F3D36] shrink-0 font-display font-bold text-xs">
                           <User className="w-4 h-4" />
                         </div>
                         <div className="truncate">
-                          <div className="text-sm font-medium text-[#17201E] group-hover:text-[#183A35]">
+                          <div className="text-sm font-semibold text-[#1B2421] group-hover:text-[#1F3D36]">
                             {person.name}
                           </div>
-                          <div className="text-xs text-[#68716D] flex items-center gap-1.5 truncate">
+                          <div className="text-xs text-[#5F6B66] flex items-center gap-1.5 truncate mt-0.5">
                             <span>{person.address}</span>
                             {terr && (
                               <>
@@ -176,7 +154,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                           </div>
                         </div>
                       </div>
-                      <ArrowRight className="w-4 h-4 text-[#68716D] group-hover:text-[#183A35] group-hover:translate-x-0.5 transition-transform shrink-0" />
+                      <ArrowRight className="w-4 h-4 text-[#5F6B66] group-hover:text-[#1F3D36] group-hover:translate-x-0.5 transition-transform shrink-0" />
                     </button>
                   );
                 })}
@@ -187,10 +165,10 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
           {/* Visits Results */}
           {matchedVisits.length > 0 && (
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-[#68716D] px-2 mb-1.5">
+              <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#5F6B66] px-2 mb-2">
                 Visit Notes & Topics ({matchedVisits.length})
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {matchedVisits.map((visit) => {
                   const person = people.find((p) => p.id === visit.personId);
                   return (
@@ -202,27 +180,27 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                           onClose();
                         }
                       }}
-                      className="w-full flex items-start justify-between p-2.5 rounded-lg hover:bg-[#F5F3ED] text-left transition-colors group"
+                      className="w-full flex items-start justify-between p-3 rounded-[14px] bg-white border border-[#E6E0D2] hover:border-[#1F3D36] text-left transition-colors group cursor-pointer"
                     >
                       <div className="flex items-start gap-3 min-w-0">
-                        <div className="w-7 h-7 rounded-md bg-[#B87545]/10 flex items-center justify-center text-[#B87545] shrink-0 mt-0.5">
+                        <div className="w-8 h-8 rounded-xl bg-[#1F3D36]/10 flex items-center justify-center text-[#1F3D36] shrink-0 mt-0.5">
                           <BookOpen className="w-4 h-4" />
                         </div>
                         <div className="min-w-0">
-                          <div className="text-sm font-medium text-[#17201E]">
+                          <div className="text-sm font-semibold text-[#1B2421]">
                             {visit.topic}
                           </div>
-                          <p className="text-xs text-[#68716D] line-clamp-1 mt-0.5">
+                          <p className="text-xs text-[#5F6B66] line-clamp-1 mt-0.5">
                             {visit.conversationDetails || visit.conversation}
                           </p>
-                          <div className="text-[11px] text-[#68716D] mt-1 flex items-center gap-1.5">
+                          <div className="text-[11px] text-[#5F6B66] mt-1 flex items-center gap-1.5 font-medium">
                             <span>{person ? person.name : 'Unknown'}</span>
                             <span>·</span>
                             <EditorialDate dateString={visit.visitDate || visit.date} format="compact" />
                           </div>
                         </div>
                       </div>
-                      <ArrowRight className="w-4 h-4 text-[#68716D] group-hover:text-[#183A35] shrink-0 mt-1" />
+                      <ArrowRight className="w-4 h-4 text-[#5F6B66] group-hover:text-[#1F3D36] shrink-0 mt-1" />
                     </button>
                   );
                 })}
@@ -233,10 +211,10 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
           {/* Territories Results */}
           {matchedTerritories.length > 0 && (
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-[#68716D] px-2 mb-1.5">
+              <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#5F6B66] px-2 mb-2">
                 Territories ({matchedTerritories.length})
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {matchedTerritories.map((t) => (
                   <button
                     key={t.id}
@@ -244,22 +222,22 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                       onSelectTerritory(t.id);
                       onClose();
                     }}
-                    className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-[#F5F3ED] text-left transition-colors group"
+                    className="w-full flex items-center justify-between p-3 rounded-[14px] bg-white border border-[#E6E0D2] hover:border-[#1F3D36] text-left transition-colors group cursor-pointer"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-7 h-7 rounded-md bg-[#B99A62]/15 flex items-center justify-center text-[#B99A62] shrink-0">
+                      <div className="w-8 h-8 rounded-xl bg-[#1F3D36]/10 flex items-center justify-center text-[#1F3D36] shrink-0">
                         <Map className="w-4 h-4" />
                       </div>
                       <div className="truncate">
-                        <div className="text-sm font-medium text-[#17201E]">
-                          {t.name} <span className="text-xs text-[#68716D] font-normal">({t.code})</span>
+                        <div className="text-sm font-semibold text-[#1B2421]">
+                          {t.name} <span className="text-xs text-[#5F6B66] font-normal">({t.code})</span>
                         </div>
                         {t.description && (
-                          <div className="text-xs text-[#68716D] truncate">{t.description}</div>
+                          <div className="text-xs text-[#5F6B66] truncate mt-0.5">{t.description}</div>
                         )}
                       </div>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-[#68716D] group-hover:text-[#183A35] shrink-0" />
+                    <ArrowRight className="w-4 h-4 text-[#5F6B66] group-hover:text-[#1F3D36] shrink-0" />
                   </button>
                 ))}
               </div>
@@ -267,6 +245,6 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </FloatingCardModal>
   );
 };

@@ -1,14 +1,31 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import {
   ChevronRight,
   AlertCircle,
   Clock,
-  Calendar,
+  RotateCw,
 } from 'lucide-react';
 import { Person, Visit, Territory } from '../../types';
 import { EditorialDate } from '../common/EditorialDate';
 import { TopographicPattern } from '../common/TopographicBackground';
+import { InitialsAvatar } from '../common/InitialsAvatar';
+import { StatusIndicator } from '../common/StatusIndicator';
 import { ActiveFollowUp } from '../../data/store';
+import { RescheduleFollowUpModal } from '../schedule/RescheduleFollowUpModal';
+import { getLocalDateKey, parseLocalDateKey } from '../../utils/dateUtils';
+
+function formatVisitedDate(dateStr?: string): string {
+  if (!dateStr) return '';
+  try {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    if (!year || !month || !day) return dateStr;
+    const date = new Date(year, month - 1, day);
+    const monthShort = date.toLocaleDateString('en-US', { month: 'short' });
+    return `${monthShort} ${day}`;
+  } catch (_) {
+    return dateStr;
+  }
+}
 
 interface HomeViewProps {
   people: Person[];
@@ -18,9 +35,22 @@ interface HomeViewProps {
   onSelectTerritory?: (territoryId: string) => void;
   onOpenAddPerson: () => void;
   onOpenRecordVisit: () => void;
-  onNavigateTab: (tab: 'people' | 'territories' | 'schedule' | 'activity') => void;
+  onNavigateTab: (tab: 'people' | 'territories' | 'growth' | 'activity') => void;
   onPreviewPerson?: (person: Person) => void;
   userName?: string;
+  onUpdateVisit?: (id: string, updates: Partial<Visit>) => void;
+}
+
+type FilterCategory = 'all' | 'today' | 'overdue' | 'upcoming' | 'date';
+
+interface WeekData {
+  id: string;
+  days: {
+    dateStr: string;
+    dayName: string;
+    dayNum: number;
+    dateObj: Date;
+  }[];
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
@@ -28,18 +58,82 @@ export const HomeView: React.FC<HomeViewProps> = ({
   visits,
   territories,
   onSelectPerson,
-  onNavigateTab,
   userName = '',
+  onUpdateVisit,
 }) => {
   const today = new Date();
   const dayNum = String(today.getDate()).padStart(2, '0');
   const monthFull = today.toLocaleDateString('en-US', { month: 'long' }).toUpperCase();
   const weekdayFull = today.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-  const yearStr = today.getFullYear();
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const todayStr = useMemo(() => getLocalDateKey(), []);
 
-  // Derive active follow-ups strictly from the LATEST visit for each person
-  const { attentionFollowUps, plannedFollowUps } = useMemo(() => {
+  // Filter & Navigation states
+  const [selectedDate, setSelectedDate] = useState<string>(todayStr);
+  const [filterCategory, setFilterCategory] = useState<FilterCategory>('all');
+  const [selectedRescheduleItem, setSelectedRescheduleItem] = useState<ActiveFollowUp | null>(null);
+
+  // Infinite weeks list state
+  const [weeks, setWeeks] = useState<WeekData[]>(() => {
+    const base = parseLocalDateKey(todayStr);
+    const dayOfWeek = base.getDay();
+    const sundayOfCurrentWeek = new Date(base);
+    sundayOfCurrentWeek.setDate(base.getDate() - dayOfWeek);
+
+    const initialWeeks: WeekData[] = [];
+    for (let offset = -20; offset <= 20; offset++) {
+      const weekStart = new Date(sundayOfCurrentWeek);
+      weekStart.setDate(sundayOfCurrentWeek.getDate() + offset * 7);
+
+      const days = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(weekStart);
+        d.setDate(weekStart.getDate() + i);
+        const dateStr = getLocalDateKey(d);
+        const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+        const dayNumVal = d.getDate();
+        days.push({ dateStr, dayName, dayNum: dayNumVal, dateObj: d });
+      }
+      initialWeeks.push({ id: `week-${offset}`, days });
+    }
+    return initialWeeks;
+  });
+
+  const [isMonthFading, setIsMonthFading] = useState<boolean>(false);
+  const [displayedMonthYear, setDisplayedMonthYear] = useState<string>(() => {
+    const d = parseLocalDateKey(todayStr);
+    return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  });
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isInitialScrollDone = useRef<boolean>(false);
+
+  // When selectedDate changes, ensure the month matches the selected day if week spans months
+  useEffect(() => {
+    const d = parseLocalDateKey(selectedDate);
+    const newMonthYear = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    if (newMonthYear !== displayedMonthYear) {
+      setIsMonthFading(true);
+      setTimeout(() => {
+        setDisplayedMonthYear(newMonthYear);
+        setIsMonthFading(false);
+      }, 150);
+    }
+  }, [selectedDate, displayedMonthYear]);
+
+  // Scroll to current week on mount without animation
+  useEffect(() => {
+    if (containerRef.current && !isInitialScrollDone.current) {
+      const middleIndex = Math.floor(weeks.length / 2);
+      const child = containerRef.current.children[middleIndex] as HTMLElement;
+      if (child) {
+        containerRef.current.scrollLeft = child.offsetLeft;
+        isInitialScrollDone.current = true;
+      }
+    }
+  }, [weeks.length]);
+
+  // Derive active follow-ups strictly from the LATEST visit for each person (all territories)
+  const activeFollowUps = useMemo(() => {
     const territoryMap = new Map<string, Territory>();
     territories.forEach((t) => territoryMap.set(t.id, t));
 
@@ -70,23 +164,205 @@ export const HomeView: React.FC<HomeViewProps> = ({
       }
     }
 
-    const attention = followUps
-      .filter((f) => f.date <= todayStr)
-      .sort((a, b) => a.date.localeCompare(b.date));
+    return followUps;
+  }, [people, visits, territories]);
 
-    const planned = followUps
-      .filter((f) => f.date > todayStr)
-      .sort((a, b) => a.date.localeCompare(b.date));
+  const scheduledDatesSet = useMemo(() => {
+    const set = new Set<string>();
+    activeFollowUps.forEach((f) => set.add(f.date));
+    return set;
+  }, [activeFollowUps]);
 
-    return { attentionFollowUps: attention, plannedFollowUps: planned };
-  }, [people, visits, territories, todayStr]);
+  const overdue = useMemo(
+    () => activeFollowUps.filter((f) => f.date < todayStr).sort((a, b) => a.date.localeCompare(b.date)),
+    [activeFollowUps, todayStr]
+  );
 
-  // Recent visits derived from actual Visit records, sorted by visitDate descending
-  const recentVisits = useMemo(() => {
-    return [...visits]
-      .sort((a, b) => new Date(b.visitDate || b.date).getTime() - new Date(a.visitDate || a.date).getTime())
-      .slice(0, 6);
-  }, [visits]);
+  const todayList = useMemo(
+    () => activeFollowUps.filter((f) => f.date === todayStr),
+    [activeFollowUps, todayStr]
+  );
+
+  const upcoming = useMemo(
+    () => activeFollowUps.filter((f) => f.date > todayStr).sort((a, b) => a.date.localeCompare(b.date)),
+    [activeFollowUps, todayStr]
+  );
+
+  const selectedDateList = useMemo(
+    () => activeFollowUps.filter((f) => f.date === selectedDate),
+    [activeFollowUps, selectedDate]
+  );
+
+  // Handle scroll detection to update month/year label with 150ms fade
+  const handleScroll = useCallback(() => {
+    if (!containerRef.current) return;
+    const container = containerRef.current;
+    const scrollLeft = container.scrollLeft;
+
+    const children = Array.from(container.children) as HTMLElement[];
+    let closestIndex = 0;
+    let minDiff = Infinity;
+
+    children.forEach((child, idx) => {
+      const diff = Math.abs(child.offsetLeft - scrollLeft);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestIndex = idx;
+      }
+    });
+
+    const activeWeek = weeks[closestIndex];
+    if (activeWeek && activeWeek.days[3]) {
+      const midDate = activeWeek.days[3].dateObj;
+      const newLabel = midDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      if (newLabel !== displayedMonthYear) {
+        setIsMonthFading(true);
+        setTimeout(() => {
+          setDisplayedMonthYear(newLabel);
+          setIsMonthFading(false);
+        }, 150);
+      }
+    }
+
+    // Infinite scroll prepend/append check
+    if (closestIndex <= 2) {
+      setWeeks((prev) => {
+        const firstWeekStart = prev[0].days[0].dateObj;
+        const newWeeks: WeekData[] = [];
+        for (let i = 10; i >= 1; i--) {
+          const wStart = new Date(firstWeekStart);
+          wStart.setDate(firstWeekStart.getDate() - i * 7);
+          const days = [];
+          for (let dIdx = 0; dIdx < 7; dIdx++) {
+            const d = new Date(wStart);
+            d.setDate(wStart.getDate() + dIdx);
+            days.push({
+              dateStr: getLocalDateKey(d),
+              dayName: d.toLocaleDateString('en-US', { weekday: 'short' }),
+              dayNum: d.getDate(),
+              dateObj: d,
+            });
+          }
+          newWeeks.push({ id: `prep-${wStart.getTime()}`, days });
+        }
+        const addedWidth = newWeeks.length * container.clientWidth;
+        container.scrollLeft += addedWidth;
+        return [...newWeeks, ...prev];
+      });
+    } else if (closestIndex >= weeks.length - 3) {
+      setWeeks((prev) => {
+        const lastWeekStart = prev[prev.length - 1].days[0].dateObj;
+        const newWeeks: WeekData[] = [];
+        for (let i = 1; i <= 10; i++) {
+          const wStart = new Date(lastWeekStart);
+          wStart.setDate(lastWeekStart.getDate() + i * 7);
+          const days = [];
+          for (let dIdx = 0; dIdx < 7; dIdx++) {
+            const d = new Date(wStart);
+            d.setDate(wStart.getDate() + dIdx);
+            days.push({
+              dateStr: getLocalDateKey(d),
+              dayName: d.toLocaleDateString('en-US', { weekday: 'short' }),
+              dayNum: d.getDate(),
+              dateObj: d,
+            });
+          }
+          newWeeks.push({ id: `app-${wStart.getTime()}`, days });
+        }
+        return [...prev, ...newWeeks];
+      });
+    }
+  }, [weeks, displayedMonthYear]);
+
+  const isSelectedDateInView = useMemo(() => {
+    return weeks.some((w) => w.days.some((d) => d.dateStr === selectedDate));
+  }, [weeks, selectedDate]);
+
+  const handleJumpToToday = () => {
+    setSelectedDate(todayStr);
+    setFilterCategory('today');
+    if (containerRef.current) {
+      const middleIndex = Math.floor(weeks.length / 2);
+      const child = containerRef.current.children[middleIndex] as HTMLElement;
+      if (child) {
+        containerRef.current.scrollTo({ left: child.offsetLeft, behavior: 'smooth' });
+      }
+    }
+  };
+
+  const selectedDateFormatted = useMemo(() => {
+    const d = parseLocalDateKey(selectedDate);
+    return d.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }, [selectedDate]);
+
+  const renderFollowUpItem = (item: ActiveFollowUp, isOverdue = false, isTodayItem = false) => {
+    const person = people.find((p) => p.id === item.personId);
+    if (!person) return null;
+
+    return (
+      <div
+        key={`${item.personId}-${item.visitId}`}
+        onClick={() => onSelectPerson(item.personId)}
+        className="py-3.5 px-4 flex items-center justify-between gap-3 cursor-pointer hover:bg-[#F5F3ED] active:bg-[#EBE8DF] transition-colors group"
+      >
+        <div className="flex items-center gap-3.5 min-w-0 flex-1">
+          <EditorialDate dateString={item.date} format="column" />
+
+          <div className="space-y-0.5 min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h2 className="font-display font-bold text-sm tracking-tight text-[#17201E] group-hover:text-[#183A35] uppercase truncate">
+                {item.personName}
+              </h2>
+              <StatusIndicator status={person.status} showText={false} />
+            </div>
+
+            <div className="text-xs text-[#68716D] flex items-center gap-1.5 truncate">
+              {item.territoryName && (
+                <span className="font-semibold text-[#183A35] uppercase">
+                  {item.territoryName}{item.territoryCode ? ` · T${item.territoryCode}` : ''}
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-[#183A35] font-medium line-clamp-1">
+                "{item.topic}"
+              </p>
+              {isOverdue && (
+                <span className="text-[10px] text-[#B87545] font-semibold flex items-center gap-0.5 shrink-0">
+                  <AlertCircle className="w-3 h-3" />
+                  Overdue
+                </span>
+              )}
+              {isTodayItem && (
+                <span className="text-[10px] text-[#183A35] font-semibold flex items-center gap-0.5 shrink-0">
+                  <Clock className="w-3 h-3 text-[#B99A62]" />
+                  Due today
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedRescheduleItem(item);
+          }}
+          className="shrink-0 h-7 px-2.5 text-[10px] font-semibold text-[#1B2421] bg-[#E9E2D3] hover:bg-[#D6CBB8] active:scale-95 rounded-[8px] transition-all flex items-center gap-1 shadow-2xs border border-[#D6CBB8]"
+        >
+          <RotateCw className="w-2.5 h-2.5 text-[#C2571A]" />
+          <span>Reschedule</span>
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto pb-16">
@@ -96,10 +372,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
         <div className="relative z-10 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            {/* Terracotta Accent Bar */}
             <div className="w-1 h-14 bg-[#B87545] rounded-full shrink-0" aria-hidden="true" />
 
-            {/* Space Grotesk Numeral + Stacked Month & Weekday */}
             <div className="flex items-baseline gap-3.5">
               <span className="font-display text-5xl sm:text-6xl font-bold tracking-tight text-[#183A35] leading-none tabular-nums">
                 {dayNum}
@@ -116,7 +390,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
             </div>
           </div>
 
-          {/* Greeting Area replacing old Journal Metadata & Coordinates */}
           <div className="text-right flex flex-col justify-center min-w-0 max-w-[150px] sm:max-w-[200px]">
             {userName ? (
               <>
@@ -136,182 +409,226 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
       </div>
 
-      {/* 2. TODAY'S ATTENTION: Two Focused Real Data Surfaces */}
-      <div className="grid grid-cols-2 gap-3.5">
-        <button
-          onClick={() => onNavigateTab('schedule')}
-          className="text-left p-4 rounded-[14px] bg-[#FCFBF8] border border-[#DCDDD5] hover:border-[#B87545]/60 active:scale-[0.98] transition-all group"
-        >
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#B87545]" />
-            <span className="text-[10px] font-mono uppercase tracking-wider text-[#68716D]">
-              ATTENTION
-            </span>
-          </div>
-          <div className="font-display text-3xl font-bold tracking-tight text-[#17201E] tabular-nums group-hover:text-[#B87545] transition-colors">
-            {attentionFollowUps.length}
-          </div>
-          <div className="text-xs font-semibold text-[#183A35] mt-0.5">
-            Follow-ups due
-          </div>
-          <div className="text-[11px] text-[#68716D] mt-0.5">
-            Overdue & today
-          </div>
-        </button>
-
-        <button
-          onClick={() => onNavigateTab('schedule')}
-          className="text-left p-4 rounded-[14px] bg-[#FCFBF8] border border-[#DCDDD5] hover:border-[#B99A62]/60 active:scale-[0.98] transition-all group"
-        >
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#B99A62]" />
-            <span className="text-[10px] font-mono uppercase tracking-wider text-[#68716D]">
-              PLANNED
-            </span>
-          </div>
-          <div className="font-display text-3xl font-bold tracking-tight text-[#17201E] tabular-nums group-hover:text-[#B99A62] transition-colors">
-            {plannedFollowUps.length}
-          </div>
-          <div className="text-xs font-semibold text-[#183A35] mt-0.5">
-            Upcoming visits
-          </div>
-          <div className="text-[11px] text-[#68716D] mt-0.5">
-            Future agenda
-          </div>
-        </button>
-      </div>
-
-      {/* 3. ATTENTION NEEDED: Real overdue and today follow-ups */}
-      {attentionFollowUps.length > 0 && (
-        <div className="space-y-2 pt-1">
-          <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#B87545]" />
-              <div className="text-xs font-mono font-bold uppercase tracking-wider text-[#B87545]">
-                ATTENTION: OVERDUE & TODAY ({attentionFollowUps.length})
-              </div>
-            </div>
-            <button
-              onClick={() => onNavigateTab('schedule')}
-              className="text-xs font-semibold text-[#B87545] hover:underline"
+      {/* SCHEDULE SECTION EMBEDDED DIRECTLY ON HOME */}
+      <div className="space-y-4">
+        {/* ONE UNIFIED CARD FOR MONTH/YEAR LABEL & WEEK STRIP */}
+        <div className="bg-[#FCFBF8] border border-[#DCDDD5] rounded-[16px] p-4 shadow-2xs relative space-y-3">
+          {/* Row 1: Month & Year Label (18px semibold, left aligned) */}
+          <div className="flex items-center justify-between gap-3 px-1">
+            <h2
+              className={`text-[18px] font-semibold text-[#183A35] tracking-tight transition-opacity duration-150 ${
+                isMonthFading ? 'opacity-0' : 'opacity-100'
+              }`}
             >
-              View Agenda
-            </button>
+              {displayedMonthYear}
+            </h2>
+
+            {!isSelectedDateInView && (
+              <button
+                onClick={handleJumpToToday}
+                className="h-6 px-2 text-[10px] font-semibold text-[#183A35] bg-[#F5F3ED] hover:bg-[#183A35] hover:text-white rounded-[6px] transition-colors shadow-2xs animate-in fade-in duration-150"
+              >
+                Today
+              </button>
+            )}
           </div>
 
-          <div className="divide-y divide-[#DCDDD5]/70 border-y border-[#DCDDD5]">
-            {attentionFollowUps.map((item) => {
-              const isOverdue = item.date < todayStr;
-              return (
-                <div
-                  key={`${item.personId}-${item.visitId}`}
-                  onClick={() => onSelectPerson(item.personId)}
-                  className="py-3 px-2 flex items-start gap-4 cursor-pointer hover:bg-[#FCFBF8] active:bg-[#F5F3ED] transition-colors group"
-                >
-                  <EditorialDate dateString={item.date} format="column" />
-                  <div className="space-y-0.5 min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-display font-bold text-sm uppercase tracking-tight text-[#17201E] group-hover:text-[#183A35] truncate min-w-0">
-                        {item.personName}
+          {/* Row 2: Native Horizontal Scroll Container for Weeks with 12px gap */}
+          <div
+            ref={containerRef}
+            onScroll={handleScroll}
+            className="flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory focus:outline-none pt-0.5"
+            style={{
+              WebkitOverflowScrolling: 'touch',
+              overscrollBehaviorX: 'contain',
+              scrollbarWidth: 'none',
+            }}
+          >
+            {weeks.map((week) => (
+              <div
+                key={week.id}
+                className="flex flex-none w-full snap-start snap-always grid grid-cols-7 gap-1 px-0.5"
+                style={{ flex: '0 0 100%' }}
+              >
+                {week.days.map((day) => {
+                  const isSelected = day.dateStr === selectedDate;
+                  const isToday = day.dateStr === todayStr;
+                  const hasVisits = scheduledDatesSet.has(day.dateStr);
+
+                  return (
+                    <button
+                      key={day.dateStr}
+                      onClick={() => setSelectedDate(day.dateStr)}
+                      className={`min-w-[44px] min-h-[44px] py-2 px-1 rounded-[10px] flex flex-col items-center justify-center transition-all duration-150 relative ${
+                        isSelected
+                          ? 'bg-[#183A35] text-white shadow-2xs scale-[1.02]'
+                          : 'hover:bg-[#F5F3ED] text-[#68716D]'
+                      }`}
+                    >
+                      <span className={`text-[10px] font-mono uppercase font-bold ${
+                        isSelected ? 'text-[#B99A62]' : 'text-[#68716D]'
+                      }`}>
+                        {day.dayName}
                       </span>
-                    </div>
-                    {item.territoryName && (
-                      <div className="text-[10px] font-mono uppercase font-semibold text-[#68716D] truncate">
-                        {item.territoryName}{item.territoryCode ? ` · T${item.territoryCode}` : ''}
-                      </div>
-                    )}
-                    <p className="font-medium text-xs text-[#183A35] line-clamp-1 pt-0.5">
-                      "{item.topic}"
-                    </p>
-                    <div className="flex items-center gap-1.5 text-[11px] text-[#B87545] font-semibold pt-0.5">
-                      {isOverdue ? (
-                        <>
-                          <AlertCircle className="w-3 h-3" />
-                          <span>Overdue follow-up</span>
-                        </>
-                      ) : (
-                        <>
-                          <Clock className="w-3 h-3 text-[#B99A62]" />
-                          <span className="text-[#183A35]">Due today</span>
-                        </>
+                      <span className={`text-sm font-display font-bold leading-tight mt-0.5 ${
+                        isSelected ? 'text-white' : 'text-[#17201E]'
+                      }`}>
+                        {day.dayNum}
+                      </span>
+                      {hasVisits && (
+                        <span className={`w-1 h-1 rounded-full mt-1 ${
+                          isSelected ? 'bg-[#B99A62]' : 'bg-[#183A35]'
+                        }`} />
                       )}
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-[#68716D] group-hover:text-[#183A35] group-hover:translate-x-0.5 transition-transform self-center shrink-0" />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 4. RECENT CONVERSATIONS: Primary Recent-Activity Content */}
-      <div className="space-y-2 pt-1">
-        <div className="flex items-center justify-between px-1">
-          <div className="text-xs font-mono font-bold uppercase tracking-wider text-[#183A35]">
-            RECENT CONVERSATIONS
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Scannable Editorial List with Column Date Markers */}
-        {recentVisits.length === 0 ? (
-          <div className="bg-[#FCFBF8] border border-dashed border-[#DCDDD5] rounded-[16px] p-8 text-center text-xs text-[#68716D]">
-            No conversations logged yet. Use the action button below to record your first field visit.
+        {/* Segmented Tabs */}
+        <div className="flex items-center p-1 bg-[#FCFBF8] border border-[#DCDDD5] rounded-[12px] overflow-x-auto">
+          <button
+            onClick={() => setFilterCategory('all')}
+            className={`flex-1 h-8 text-xs font-semibold rounded-[8px] transition-colors whitespace-nowrap px-3 ${
+              filterCategory === 'all'
+                ? 'bg-[#183A35] text-white shadow-2xs'
+                : 'text-[#68716D] hover:text-[#17201E]'
+            }`}
+          >
+            All ({activeFollowUps.length})
+          </button>
+          <button
+            onClick={() => setFilterCategory('today')}
+            className={`flex-1 h-8 text-xs font-semibold rounded-[8px] transition-colors whitespace-nowrap px-3 ${
+              filterCategory === 'today'
+                ? 'bg-[#183A35] text-white shadow-2xs'
+                : 'text-[#68716D] hover:text-[#17201E]'
+            }`}
+          >
+            Today ({todayList.length})
+          </button>
+          <button
+            onClick={() => setFilterCategory('overdue')}
+            className={`flex-1 h-8 text-xs font-semibold rounded-[8px] transition-colors whitespace-nowrap px-3 ${
+              filterCategory === 'overdue'
+                ? 'bg-[#183A35] text-white shadow-2xs'
+                : overdue.length > 0
+                ? 'text-[#B87545] font-bold hover:text-[#17201E]'
+                : 'text-[#68716D] hover:text-[#17201E]'
+            }`}
+          >
+            Overdue ({overdue.length})
+          </button>
+          <button
+            onClick={() => setFilterCategory('upcoming')}
+            className={`flex-1 h-8 text-xs font-semibold rounded-[8px] transition-colors whitespace-nowrap px-3 ${
+              filterCategory === 'upcoming'
+                ? 'bg-[#183A35] text-white shadow-2xs'
+                : 'text-[#68716D] hover:text-[#17201E]'
+            }`}
+          >
+            Upcoming ({upcoming.length})
+          </button>
+          {filterCategory === 'date' && (
+            <button
+              onClick={() => setFilterCategory('date')}
+              className="flex-1 h-8 text-xs font-semibold rounded-[8px] bg-[#B87545] text-white shadow-2xs whitespace-nowrap px-3"
+            >
+              Date ({selectedDateList.length})
+            </button>
+          )}
+        </div>
+
+        {/* Grouped Follow-up List */}
+        {activeFollowUps.length === 0 ? (
+          <div className="bg-[#FCFBF8] border border-dashed border-[#DCDDD5] rounded-[16px] p-8 text-center text-xs text-[#68716D] space-y-1">
+            <p className="font-semibold text-sm text-[#17201E]">No active follow-ups</p>
+            <p>When you record field visits with follow-up dates, they automatically appear here.</p>
+          </div>
+        ) : filterCategory === 'date' ? (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-[#183A35]">
+                {selectedDateFormatted} · {selectedDateList.length} {selectedDateList.length === 1 ? 'follow-up' : 'follow-ups'}
+              </h2>
+            </div>
+
+            {selectedDateList.length === 0 ? (
+              <div className="bg-[#FCFBF8] border border-dashed border-[#DCDDD5] rounded-[16px] p-8 text-center text-xs text-[#68716D]">
+                <p className="font-semibold text-sm text-[#17201E] mb-0.5">No follow-ups today</p>
+                <p>Your schedule is clear for this date.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-[#DCDDD5]/70 border-y border-[#DCDDD5]">
+                {selectedDateList.map((item) =>
+                  renderFollowUpItem(item, item.date < todayStr, item.date === todayStr)
+                )}
+              </div>
+            )}
           </div>
         ) : (
-          <div className="divide-y divide-[#DCDDD5]/70 border-y border-[#DCDDD5]">
-            {recentVisits.map((visit) => {
-              const person = people.find((p) => p.id === visit.personId);
-              const terr = person ? territories.find((t) => t.id === person.territoryId) : undefined;
-              const dateVal = visit.visitDate || visit.date;
-              const details = visit.conversationDetails || visit.conversation;
-
-              return (
-                <div
-                  key={visit.id}
-                  onClick={() => person && onSelectPerson(person.id)}
-                  className="py-3.5 px-2 flex items-start gap-4 cursor-pointer hover:bg-[#FCFBF8] active:bg-[#F5F3ED] transition-colors group"
-                >
-                  {/* Narrow Visual Column Date Marker */}
-                  <EditorialDate dateString={dateVal} format="column" />
-
-                  {/* Content */}
-                  <div className="space-y-1 min-w-0 flex-1">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className="font-display font-bold text-sm uppercase tracking-tight text-[#17201E] group-hover:text-[#183A35] truncate">
-                        {person ? person.name : 'Unknown Person'}
-                      </span>
-                      {terr && (
-                        <span className="text-[10px] font-mono uppercase font-semibold text-[#68716D] shrink-0">
-                          {terr.name}{terr.code ? ` · T${terr.code}` : ''}
-                        </span>
-                      )}
-                    </div>
-
-                    <p className="font-medium text-xs text-[#183A35] line-clamp-1">
-                      "{visit.topic}"
-                    </p>
-
-                    {details && (
-                      <p className="text-xs text-[#68716D] line-clamp-1">
-                        {details}
-                      </p>
-                    )}
-
-                    {visit.nextTopic && (
-                      <div className="text-[11px] text-[#B87545] font-medium pt-0.5">
-                        Next: {visit.nextTopic}
-                      </div>
-                    )}
-                  </div>
-
-                  <ChevronRight className="w-4 h-4 text-[#68716D] group-hover:text-[#183A35] group-hover:translate-x-0.5 transition-transform self-center shrink-0" />
+          <div className="space-y-6">
+            {(filterCategory === 'all' || filterCategory === 'overdue') && overdue.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 px-1">
+                  <span className="w-2 h-2 rounded-full bg-[#B87545]" />
+                  <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-[#B87545]">
+                    OVERDUE ({overdue.length})
+                  </h2>
                 </div>
-              );
-            })}
+                <div className="divide-y divide-[#DCDDD5]/70 border-y border-[#DCDDD5]">
+                  {overdue.map((item) => renderFollowUpItem(item, true, false))}
+                </div>
+              </div>
+            )}
+
+            {(filterCategory === 'all' || filterCategory === 'today') && todayList.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 px-1">
+                  <span className="w-2 h-2 rounded-full bg-[#B99A62]" />
+                  <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-[#183A35]">
+                    TODAY ({todayList.length})
+                  </h2>
+                </div>
+                <div className="divide-y divide-[#DCDDD5]/70 border-y border-[#DCDDD5]">
+                  {todayList.map((item) => renderFollowUpItem(item, false, true))}
+                </div>
+              </div>
+            )}
+
+            {(filterCategory === 'all' || filterCategory === 'upcoming') && upcoming.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-1 px-1">
+                  <span className="w-2 h-2 rounded-full bg-[#183A35]" />
+                  <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-[#68716D]">
+                    UPCOMING ({upcoming.length})
+                  </h2>
+                </div>
+                <div className="divide-y divide-[#DCDDD5]/70 border-y border-[#DCDDD5]">
+                  {upcoming.map((item) => renderFollowUpItem(item, false, false))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {/* Reschedule Modal */}
+      <RescheduleFollowUpModal
+        isOpen={Boolean(selectedRescheduleItem)}
+        onClose={() => setSelectedRescheduleItem(null)}
+        personName={selectedRescheduleItem?.personName || ''}
+        currentDate={selectedRescheduleItem?.date || ''}
+        visitId={selectedRescheduleItem?.visitId || ''}
+        onSave={(vId, newDate) => {
+          if (onUpdateVisit) {
+            onUpdateVisit(vId, { nextFollowUpDate: newDate });
+          }
+        }}
+      />
     </div>
   );
 };

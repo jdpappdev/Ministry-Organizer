@@ -1,11 +1,5 @@
 import React from 'react';
 import {
-  Clock,
-  BookOpen,
-  UserPlus,
-  Calendar,
-  Map,
-  ArrowRight,
   ChevronRight,
 } from 'lucide-react';
 import { ActivityItem } from '../../types';
@@ -25,36 +19,36 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
   const getBadge = (type: ActivityItem['type']) => {
     switch (type) {
       case 'visit_logged':
-        return { label: 'VISIT RECORDED', color: 'text-[#183A35] bg-[#183A35]/10' };
+        return { label: 'VISIT RECORDED', color: 'pill-neutral-forest' };
       case 'person_added':
-        return { label: 'PERSON ADDED', color: 'text-[#B87545] bg-[#B87545]/12' };
+        return { label: 'PERSON ADDED', color: 'pill-neutral-sage' };
       case 'schedule_created':
-        return { label: 'FOLLOW-UP PLANNED', color: 'text-[#6B5528] bg-[#B99A62]/18' };
+        return { label: 'FOLLOW-UP PLANNED', color: 'pill-neutral-sage' };
       case 'territory_created':
-        return { label: 'TERRITORY CREATED', color: 'text-[#183A35] bg-[#DDE7E1]/70' };
+        return { label: 'TERRITORY CREATED', color: 'pill-neutral-forest' };
       default:
-        return { label: 'LOG ENTRY', color: 'text-[#68716D] bg-[#F5F3ED]' };
+        return { label: 'LOG ENTRY', color: 'pill-neutral-sage' };
     }
   };
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto pb-20">
+    <div className="space-y-5 max-w-2xl mx-auto pb-20">
       {/* Editorial Header */}
-      <div className="border-b border-[#DCDDD5] pb-4 pt-1">
-        <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#17201E]">
+      <div className="border-b border-[#E6E0D2] pb-4 pt-1">
+        <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#1B2421]">
           Activity Chronicle
         </h1>
-        <p className="text-xs font-medium text-[#68716D] mt-0.5">
+        <p className="text-xs font-medium text-[#5F6B66] mt-0.5">
           Chronological audit trail of conversations, records, and plans
         </p>
       </div>
 
       {activities.length === 0 ? (
-        <div className="bg-[#FCFBF8] border border-dashed border-[#DCDDD5] rounded-[16px] p-10 text-center text-xs text-[#68716D]">
+        <div className="bg-white border border-dashed border-[#E6E0D2] rounded-[16px] p-10 text-center text-xs text-[#5F6B66]">
           No recorded activity in the field journal yet.
         </div>
       ) : (
-        <div className="divide-y divide-[#DCDDD5]/70 border-y border-[#DCDDD5]">
+        <div className="space-y-3.5">
           {activities.map((act) => {
             const badge = getBadge(act.type);
             const timeFormatted = new Date(act.timestamp).toLocaleTimeString([], {
@@ -65,42 +59,42 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
             return (
               <div
                 key={act.id}
-                className="py-4 px-2 flex items-start gap-4 hover:bg-[#FCFBF8] transition-colors group"
+                className="list-card p-4 flex items-start gap-4 group select-none"
               >
                 {/* Narrow Visual Column Date Marker */}
                 <EditorialDate dateString={act.timestamp} format="column" />
 
                 {/* Content */}
-                <div className="space-y-1 min-w-0 flex-1">
+                <div className="space-y-1.5 min-w-0 flex-1">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${badge.color}`}>
+                    <span className={badge.color}>
                       {badge.label}
                     </span>
-                    <span className="text-[11px] font-mono text-[#68716D]">
+                    <span className="text-[11px] font-mono text-[#5F6B66]">
                       {timeFormatted}
                     </span>
                   </div>
 
                   <div className="flex items-baseline gap-2">
-                    <span className="font-display font-bold text-sm uppercase tracking-tight text-[#17201E]">
+                    <span className="font-display font-bold text-base text-[#1B2421]">
                       {act.personName || act.territoryName || act.title}
                     </span>
                     {act.territoryName && act.personName && (
-                      <span className="text-xs text-[#68716D]">
+                      <span className="text-xs text-[#5F6B66]">
                         · {act.territoryName}
                       </span>
                     )}
                   </div>
 
-                  <p className="text-xs text-[#17201E]/80 leading-relaxed line-clamp-2">
+                  <p className="text-xs text-[#1B2421]/90 leading-relaxed line-clamp-2">
                     {act.description}
                   </p>
 
-                  <div className="flex items-center gap-3 pt-0.5 text-xs">
+                  <div className="flex items-center gap-3 pt-1 text-xs">
                     {act.personId && (
                       <button
                         onClick={() => onSelectPerson(act.personId!)}
-                        className="font-semibold text-[#183A35] hover:underline flex items-center gap-1"
+                        className="font-semibold text-[#1F3D36] hover:underline flex items-center gap-1 cursor-pointer"
                       >
                         <span>View Individual</span>
                         <ChevronRight className="w-3.5 h-3.5" />
@@ -109,7 +103,7 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
                     {act.territoryId && !act.personId && (
                       <button
                         onClick={() => onSelectTerritory(act.territoryId!)}
-                        className="font-semibold text-[#B87545] hover:underline flex items-center gap-1"
+                        className="font-semibold text-[#1F3D36] hover:underline flex items-center gap-1 cursor-pointer"
                       >
                         <span>View Territory</span>
                         <ChevronRight className="w-3.5 h-3.5" />

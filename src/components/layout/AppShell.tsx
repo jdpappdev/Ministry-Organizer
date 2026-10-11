@@ -60,7 +60,6 @@ export const AppShell: React.FC<AppShellProps> = ({
     { id: 'home', label: 'Home', icon: Home },
     { id: 'people', label: 'People', icon: Users },
     { id: 'territories', label: 'Map', icon: Map },
-    { id: 'schedule', label: 'Schedule', icon: Calendar },
     { id: 'growth', label: 'Growth', icon: Sprout },
   ];
 

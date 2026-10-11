@@ -1,11 +1,10 @@
-import React, { useEffect } from 'react';
-import { X, User, MapPin, Calendar, Clock, BookOpen, ChevronRight, AlertCircle, Sparkles } from 'lucide-react';
+import React from 'react';
+import { User, MapPin, Calendar, Clock, BookOpen, ChevronRight, Sprout } from 'lucide-react';
 import { PersonPlantData } from '../../utils/growthUtils';
 import { Territory } from '../../types';
 import { BotanicalPlantGlyph } from './BotanicalPlantGlyph';
 import { EditorialDate } from '../common/EditorialDate';
-import { InitialsAvatar } from '../common/InitialsAvatar';
-import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
+import { FloatingCard } from '../common/FloatingCard';
 
 interface PlantPreviewSheetProps {
   plantData: PersonPlantData | null;
@@ -24,78 +23,40 @@ export const PlantPreviewSheet: React.FC<PlantPreviewSheetProps> = ({
   onViewProfile,
   onRecordVisit,
 }) => {
-  useBodyScrollLock(isOpen);
+  if (!plantData) return null;
 
-  // Handle ESC key press
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen || !plantData) return null;
-
-  const { person, stage, stageLabel, stageDescription, health, healthLabel, healthReason, visitsCount, latestVisit } = plantData;
+  const { person, stage, stageLabel, health, healthLabel, healthReason, visitsCount, latestVisit } = plantData;
 
   const healthBgMap = {
-    healthy: 'bg-[#183A35]/10 text-[#183A35] border-[#183A35]/20',
-    needs_care: 'bg-[#B87545]/15 text-[#B87545] border-[#B87545]/30',
-    wilting: 'bg-[#B99A62]/20 text-[#6B5528] border-[#B99A62]/40',
-    fading: 'bg-[#68716D]/15 text-[#4D5552] border-[#68716D]/30',
+    healthy: 'bg-[#1F3D36]/10 text-[#1F3D36] border-[#1F3D36]/20',
+    needs_care: 'bg-[#C2571A]/15 text-[#C2571A] border-[#C2571A]/30',
+    wilting: 'bg-[#C9A978]/20 text-[#6B5528] border-[#C9A978]/40',
+    fading: 'bg-[#5F6B66]/15 text-[#4D5552] border-[#5F6B66]/30',
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-[#102C29]/40 backdrop-blur-2xs animate-in fade-in duration-150"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="plant-preview-title"
+    <FloatingCard
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Botanical Specimen"
+      subtitle={`${stageLabel} stage · ${visitsCount} ${visitsCount === 1 ? 'visit' : 'visits'}`}
+      icon={<Sprout className="w-4 h-4 text-[#C9A978]" />}
+      maxWidthClass="max-w-md"
     >
-      <div
-        className="relative w-full max-w-lg bg-[#FCFBF8] border border-[#DCDDD5] rounded-t-[24px] sm:rounded-[20px] shadow-2xl p-5 sm:p-6 space-y-4 animate-in slide-in-from-bottom-4 duration-200"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Top Handle / Close */}
-        <div className="flex items-center justify-between border-b border-[#DCDDD5]/60 pb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono font-bold tracking-widest text-[#B87545] uppercase">
-              BOTANICAL SPECIMEN · {stageLabel}
-            </span>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center text-[#68716D] hover:text-[#17201E] active:bg-[#F5F3ED] rounded-lg transition-colors"
-            aria-label="Close plant preview"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
+      <div className="space-y-4">
         {/* Hero Card with Botanical Glyph */}
-        <div className="flex items-center gap-4 bg-[#F5F3ED] border border-[#DCDDD5] rounded-[16px] p-4">
-          <div className="w-16 h-16 bg-[#FCFBF8] border border-[#DCDDD5] rounded-[14px] flex items-center justify-center shrink-0 shadow-2xs">
+        <div className="flex items-center gap-4 bg-[#E9E2D3]/50 border border-[#D6CBB8] rounded-[14px] p-4">
+          <div className="w-16 h-16 bg-[#FCFBF8] border border-[#D6CBB8] rounded-[12px] flex items-center justify-center shrink-0 shadow-2xs">
             <BotanicalPlantGlyph stage={stage} health={health} size="lg" />
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 id="plant-preview-title" className="font-display font-bold text-lg text-[#17201E] truncate">
-                {person.name}
-              </h2>
-            </div>
+            <h2 className="font-display font-bold text-lg text-[#1B2421] truncate">
+              {person.name}
+            </h2>
 
-            <div className="text-xs text-[#68716D] flex items-center gap-2 mt-0.5">
-              <span className="font-semibold text-[#183A35]">{stageLabel} Stage</span>
+            <div className="text-xs text-[#5F6B66] flex items-center gap-2 mt-0.5">
+              <span className="font-semibold text-[#1F3D36]">{stageLabel} Stage</span>
               <span>·</span>
               <span>{visitsCount} {visitsCount === 1 ? 'visit' : 'visits'} recorded</span>
             </div>
@@ -106,7 +67,7 @@ export const PlantPreviewSheet: React.FC<PlantPreviewSheetProps> = ({
                 <span className="w-1.5 h-1.5 rounded-full bg-current" />
                 <span>{healthLabel}</span>
               </span>
-              <span className="text-[11px] text-[#68716D] truncate">
+              <span className="text-[11px] text-[#5F6B66] truncate">
                 {healthReason}
               </span>
             </div>
@@ -115,30 +76,30 @@ export const PlantPreviewSheet: React.FC<PlantPreviewSheetProps> = ({
 
         {/* Meta Context */}
         <div className="grid grid-cols-2 gap-3 text-xs">
-          <div className="p-3 bg-white border border-[#DCDDD5] rounded-[12px] space-y-1">
-            <div className="text-[10px] font-mono text-[#68716D] uppercase font-semibold flex items-center gap-1">
-              <Calendar className="w-3 h-3 text-[#B87545]" />
+          <div className="p-3 bg-white border border-[#D6CBB8] rounded-[12px] space-y-1">
+            <div className="text-[10px] font-mono text-[#5F6B66] uppercase font-semibold flex items-center gap-1">
+              <Calendar className="w-3 h-3 text-[#C2571A]" />
               <span>Last Contact</span>
             </div>
             <div>
               {latestVisit ? (
                 <EditorialDate dateString={latestVisit.visitDate || latestVisit.date} format="horizontal" showYear={false} />
               ) : (
-                <span className="text-[#68716D] italic">No visits yet</span>
+                <span className="text-[#5F6B66] italic">No visits yet</span>
               )}
             </div>
           </div>
 
-          <div className="p-3 bg-white border border-[#DCDDD5] rounded-[12px] space-y-1">
-            <div className="text-[10px] font-mono text-[#68716D] uppercase font-semibold flex items-center gap-1">
-              <Clock className="w-3 h-3 text-[#183A35]" />
+          <div className="p-3 bg-white border border-[#D6CBB8] rounded-[12px] space-y-1">
+            <div className="text-[10px] font-mono text-[#5F6B66] uppercase font-semibold flex items-center gap-1">
+              <Clock className="w-3 h-3 text-[#1F3D36]" />
               <span>Next Follow-Up</span>
             </div>
             <div>
               {latestVisit?.nextFollowUpDate ? (
                 <EditorialDate dateString={latestVisit.nextFollowUpDate} format="horizontal" showYear={false} />
               ) : (
-                <span className="text-[#68716D] italic">None scheduled</span>
+                <span className="text-[#5F6B66] italic">None scheduled</span>
               )}
             </div>
           </div>
@@ -146,15 +107,15 @@ export const PlantPreviewSheet: React.FC<PlantPreviewSheetProps> = ({
 
         {/* Territory & Address */}
         {(territory || person.address) && (
-          <div className="p-3 bg-white border border-[#DCDDD5] rounded-[12px] flex items-center justify-between text-xs">
+          <div className="p-3 bg-white border border-[#D6CBB8] rounded-[12px] flex items-center justify-between text-xs">
             <div className="flex items-center gap-2 truncate">
-              <MapPin className="w-3.5 h-3.5 text-[#B87545] shrink-0" />
-              <span className="truncate text-[#17201E]">
+              <MapPin className="w-3.5 h-3.5 text-[#C2571A] shrink-0" />
+              <span className="truncate text-[#1B2421]">
                 {territory ? `${territory.name}${person.address ? ` · ${person.address}` : ''}` : person.address}
               </span>
             </div>
             {territory?.code && (
-              <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#F5F3ED] text-[#183A35] shrink-0">
+              <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#E9E2D3] text-[#1F3D36] shrink-0">
                 T{territory.code}
               </span>
             )}
@@ -162,13 +123,13 @@ export const PlantPreviewSheet: React.FC<PlantPreviewSheetProps> = ({
         )}
 
         {/* Actions */}
-        <div className="pt-2 flex items-center gap-3">
+        <div className="pt-1 flex items-center gap-3">
           <button
             onClick={() => {
               onClose();
               onViewProfile(person.id);
             }}
-            className="flex-1 h-11 flex items-center justify-center gap-2 text-xs font-semibold text-white bg-[#183A35] hover:bg-[#102C29] active:scale-[0.98] rounded-[12px] transition-all shadow-xs"
+            className="flex-1 h-11 flex items-center justify-center gap-2 text-xs font-semibold text-[#F6F1E5] bg-[#1F3D36] hover:bg-[#102C29] active:scale-[0.98] rounded-[12px] transition-all shadow-xs paper-button"
           >
             <User className="w-4 h-4" />
             <span>View Person Profile</span>
@@ -181,14 +142,14 @@ export const PlantPreviewSheet: React.FC<PlantPreviewSheetProps> = ({
                 onClose();
                 onRecordVisit(person.id);
               }}
-              className="px-4 h-11 flex items-center justify-center gap-1.5 text-xs font-semibold text-[#183A35] bg-white border border-[#DCDDD5] hover:border-[#183A35] active:scale-[0.98] rounded-[12px] transition-all shadow-2xs"
+              className="px-4 h-11 flex items-center justify-center gap-1.5 text-xs font-semibold text-[#1F3D36] bg-white border border-[#D6CBB8] hover:border-[#1F3D36] active:scale-[0.98] rounded-[12px] transition-all shadow-2xs"
             >
-              <BookOpen className="w-3.5 h-3.5 text-[#B87545]" />
+              <BookOpen className="w-3.5 h-3.5 text-[#C2571A]" />
               <span>Record Visit</span>
             </button>
           )}
         </div>
       </div>
-    </div>
+    </FloatingCard>
   );
 };

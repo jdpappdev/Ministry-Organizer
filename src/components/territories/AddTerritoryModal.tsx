@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Map, Compass, Edit2, Trash2 } from 'lucide-react';
+import { Map, Compass, Edit2, Trash2 } from 'lucide-react';
 import { Territory } from '../../types';
 import { NewTerritoryInput } from '../../data/store';
 import { ConfirmDeleteModal } from '../common/ConfirmDeleteModal';
-import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
+import { FloatingCard } from '../common/FloatingCard';
 
 interface AddTerritoryModalProps {
   isOpen: boolean;
@@ -28,8 +28,6 @@ export const AddTerritoryModal: React.FC<AddTerritoryModalProps> = ({
   const [boundaryNotes, setBoundaryNotes] = useState('');
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
 
-  useBodyScrollLock(isOpen);
-
   useEffect(() => {
     if (isOpen) {
       if (territoryToEdit) {
@@ -46,23 +44,6 @@ export const AddTerritoryModal: React.FC<AddTerritoryModalProps> = ({
       setIsConfirmDeleteOpen(false);
     }
   }, [isOpen, territoryToEdit]);
-
-  // Handle ESC key press
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,115 +77,92 @@ export const AddTerritoryModal: React.FC<AddTerritoryModalProps> = ({
 
   return (
     <>
-      <div
-        className="fixed inset-0 z-[9999] flex flex-col justify-end sm:justify-center sm:items-center sm:p-4 bg-[#102C29]/40 backdrop-blur-xs cursor-default"
-        onClick={onClose}
+      <FloatingCard
+        isOpen={isOpen}
+        onClose={onClose}
+        title={territoryToEdit ? 'Edit Territory' : 'New Territory'}
+        subtitle="Geographic field sector"
+        icon={<Map className="w-4 h-4 text-[#C9A978]" />}
+        maxWidthClass="max-w-md"
       >
-        <div
-          className="relative w-full sm:max-w-lg bg-[#FCFBF8] border-t sm:border border-[#DCDDD5] rounded-t-[20px] sm:rounded-[18px] shadow-2xl overflow-hidden max-h-[92vh] flex flex-col animate-in slide-in-from-bottom duration-200 cursor-auto"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="territory-modal-title"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[#DCDDD5] bg-[#F5F3ED]">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-[#183A35] flex items-center justify-center text-white shadow-2xs">
-                <Map className="w-4 h-4" />
-              </div>
-              <h2 id="territory-modal-title" className="font-display font-bold text-base text-[#17201E]">
-                {territoryToEdit ? 'Edit Territory' : 'New Territory'}
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-2 text-[#68716D] hover:text-[#17201E] rounded-lg transition-colors"
-              aria-label="Close dialog"
-            >
-              <X className="w-5 h-5" />
-            </button>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-[#1B2421] mb-1">
+              Territory Name <span className="text-[#C2571A]">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter territory name"
+              className="w-full h-11 px-3.5 text-sm bg-white border border-[#D6CBB8] rounded-[10px] focus:outline-none focus:border-[#1F3D36] text-[#1B2421]"
+            />
           </div>
 
-          <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-[#17201E] mb-1">
-                Territory Name <span className="text-[#B87545]">*</span>
+              <label className="block text-xs font-semibold text-[#1B2421] mb-1">
+                Code <span className="text-xs text-[#5F6B66] font-normal">(optional)</span>
               </label>
               <input
                 type="text"
-                required
-                autoFocus
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter territory name"
-                className="w-full h-12 px-3.5 text-sm bg-white border border-[#DCDDD5] rounded-[12px] focus:outline-none focus:border-[#183A35]"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="Code"
+                className="w-full h-11 px-3 text-sm bg-white border border-[#D6CBB8] rounded-[10px] focus:outline-none focus:border-[#1F3D36] text-[#1B2421]"
               />
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-[#17201E] mb-1">
-                  Code <span className="text-xs text-[#68716D] font-normal">(optional)</span>
-                </label>
-                <input
-                  type="text"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder="Code"
-                  className="w-full h-12 px-3 text-sm bg-white border border-[#DCDDD5] rounded-[12px] focus:outline-none focus:border-[#183A35]"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-[#17201E] mb-1">
-                  Boundary / Sector Notes
-                </label>
-                <input
-                  type="text"
-                  value={boundaryNotes}
-                  onChange={(e) => setBoundaryNotes(e.target.value)}
-                  placeholder="Boundaries, streets, or sector landmarks"
-                  className="w-full h-12 px-3.5 text-sm bg-white border border-[#DCDDD5] rounded-[12px] focus:outline-none focus:border-[#183A35]"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-[#17201E] mb-1">
-                Description / Housing Type
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-[#1B2421] mb-1">
+                Boundary / Sector Notes
               </label>
-              <textarea
-                rows={2}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Add a short description or housing context"
-                className="w-full p-3 text-sm bg-white border border-[#DCDDD5] rounded-[12px] focus:outline-none focus:border-[#183A35]"
+              <input
+                type="text"
+                value={boundaryNotes}
+                onChange={(e) => setBoundaryNotes(e.target.value)}
+                placeholder="Boundaries, streets, or landmarks"
+                className="w-full h-11 px-3.5 text-sm bg-white border border-[#D6CBB8] rounded-[10px] focus:outline-none focus:border-[#1F3D36] text-[#1B2421]"
               />
             </div>
+          </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-[#DCDDD5] gap-3">
-              {territoryToEdit && onDelete ? (
-                <button
-                  type="button"
-                  onClick={() => setIsConfirmDeleteOpen(true)}
-                  className="text-xs font-semibold text-red-700/80 hover:text-red-800 hover:underline py-2"
-                >
-                  Delete territory
-                </button>
-              ) : (
-                <div />
-              )}
+          <div>
+            <label className="block text-xs font-semibold text-[#1B2421] mb-1">
+              Description / Housing Type
+            </label>
+            <textarea
+              rows={2}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Add short description or housing context"
+              className="w-full p-3 text-sm bg-white border border-[#D6CBB8] rounded-[10px] focus:outline-none focus:border-[#1F3D36] text-[#1B2421]"
+            />
+          </div>
 
+          <div className="flex items-center justify-between pt-3 border-t border-[#D6CBB8] gap-3">
+            {territoryToEdit && onDelete ? (
               <button
-                type="submit"
-                className="h-11 px-6 text-xs font-semibold text-white bg-[#183A35] hover:bg-[#102C29] active:scale-[0.98] rounded-[10px] transition-all shadow-xs"
+                type="button"
+                onClick={() => setIsConfirmDeleteOpen(true)}
+                className="text-xs font-semibold text-red-700/80 hover:text-red-800 hover:underline py-2"
               >
-                Save
+                Delete territory
               </button>
-            </div>
-          </form>
-        </div>
-      </div>
+            ) : (
+              <div />
+            )}
+
+            <button
+              type="submit"
+              className="h-10 px-5 text-xs font-semibold text-[#F6F1E5] bg-[#1F3D36] hover:bg-[#102C29] active:scale-[0.98] rounded-[8px] transition-all shadow-xs paper-button"
+            >
+              Save
+            </button>
+          </div>
+        </form>
+      </FloatingCard>
 
       {/* Safe In-App Confirmation Modal for Territory Delete */}
       <ConfirmDeleteModal

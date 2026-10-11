@@ -218,46 +218,41 @@ export const TerritoriesView: React.FC<TerritoriesViewProps> = ({
 
         <button
           onClick={() => onOpenAddTerritoryModal?.()}
-          className="h-12 px-4.5 flex items-center justify-center gap-1.5 text-xs font-semibold text-white bg-[#183A35] hover:bg-[#102C29] active:scale-[0.98] rounded-[12px] transition-all shadow-xs shrink-0"
+          className="btn-tactile-primary px-5 text-xs shrink-0"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4 mr-1" />
           <span>New Territory</span>
         </button>
       </div>
 
-      {/* 2. HORIZONTAL TERRITORY SELECTOR */}
-      <div className="space-y-2">
-        {/* Horizontal Scroll Slider */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {territories.map((t) => {
-            const count = people.filter((p) => p.territoryId === t.id).length;
-            const isSelected = t.id === selectedTerritory?.id;
+      {/* 2. HORIZONTAL TERRITORY SELECTOR (Paper Tabs) */}
+      <div className="flex items-end gap-1.5 border-b border-[#E6E0D2] overflow-x-auto pb-0 pt-1 scrollbar-none">
+        {territories.map((t) => {
+          const count = people.filter((p) => p.territoryId === t.id).length;
+          const isSelected = t.id === selectedTerritory?.id;
 
-            return (
-              <button
-                key={t.id}
-                onClick={() => {
-                  setSelectedTerritoryId(t.id);
-                  setSelectedPinId(null);
-                }}
-                className={`h-11 px-3.5 flex items-center gap-2 text-xs font-semibold rounded-[12px] border transition-all shrink-0 active:scale-95 ${
-                  isSelected
-                    ? 'bg-[#183A35] text-white border-[#183A35] shadow-xs'
-                    : 'bg-[#FCFBF8] text-[#68716D] hover:text-[#17201E] border-[#DCDDD5]'
+          return (
+            <button
+              key={t.id}
+              onClick={() => {
+                setSelectedTerritoryId(t.id);
+                setSelectedPinId(null);
+              }}
+              className={`paper-tab px-4 py-2.5 text-xs font-semibold shrink-0 cursor-pointer flex items-center gap-2 ${
+                isSelected ? 'paper-tab-active' : 'paper-tab-inactive'
+              }`}
+            >
+              <span>{t.name}</span>
+              <span
+                className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                  isSelected ? 'bg-[#1F3D36]/10 text-[#1F3D36]' : 'bg-[#E6E0D2]/60 text-[#5F6B66]'
                 }`}
               >
-                <span>{t.name}</span>
-                <span
-                  className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
-                    isSelected ? 'bg-white/20 text-white' : 'bg-[#DCDDD5]/60 text-[#17201E]'
-                  }`}
-                >
-                  {t.code ? `T${t.code} · ` : ''}{count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+                {t.code ? `T${t.code} · ` : ''}{count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* 3. TERRITORY SUMMARY: Compact, Subtle Context */}
@@ -410,7 +405,7 @@ export const TerritoriesView: React.FC<TerritoriesViewProps> = ({
           </button>
 
           {showPeopleList && (
-            <div className="divide-y divide-[#DCDDD5]/70 border-y border-[#DCDDD5] bg-[#FCFBF8] rounded-[14px] overflow-hidden">
+            <div className="space-y-3 pt-1">
               {territoryPeople.map((person) => {
                 const isMapped = isValidCoordinate(person.location);
 
@@ -424,18 +419,18 @@ export const TerritoriesView: React.FC<TerritoriesViewProps> = ({
                         onSelectPerson(person.id);
                       }
                     }}
-                    className="py-3 px-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-[#F5F3ED] transition-colors group"
+                    className="list-card p-3.5 flex items-center justify-between gap-3 cursor-pointer group select-none"
                   >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <InitialsAvatar name={person.name} size="sm" />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-display font-bold text-xs uppercase text-[#17201E] group-hover:text-[#183A35] truncate">
+                          <span className="font-display font-bold text-sm text-[#1B2421] group-hover:text-[#1F3D36] truncate">
                             {person.name}
                           </span>
                           <StatusIndicator status={person.status} showText={false} />
                         </div>
-                        <p className="text-[11px] text-[#68716D] truncate">
+                        <p className="text-xs text-[#5F6B66] truncate mt-0.5">
                           {person.address}
                         </p>
                       </div>
@@ -443,15 +438,15 @@ export const TerritoriesView: React.FC<TerritoriesViewProps> = ({
 
                     <div className="flex items-center gap-2 shrink-0">
                       <span
-                        className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                        className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
                           isMapped
-                            ? 'bg-[#183A35]/10 text-[#183A35] font-semibold'
-                            : 'bg-[#DCDDD5]/50 text-[#68716D]'
+                            ? 'bg-[#E9F0EC] text-[#1F3D36] font-semibold border border-[#D0DFD6]'
+                            : 'bg-[#F5F1E8] text-[#5F6B66] border border-[#E6E0D2]'
                         }`}
                       >
                         {isMapped ? 'Mapped' : 'Address only'}
                       </span>
-                      <ChevronRight className="w-3.5 h-3.5 text-[#68716D] group-hover:text-[#183A35]" />
+                      <ChevronRight className="w-4 h-4 text-[#5F6B66] group-hover:text-[#1F3D36]" />
                     </div>
                   </div>
                 );

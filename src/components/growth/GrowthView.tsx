@@ -9,6 +9,7 @@ import {
 import { BotanicalPlantGlyph } from './BotanicalPlantGlyph';
 import { BotanicalGardenHero } from './BotanicalGardenHero';
 import { PlantPreviewSheet } from './PlantPreviewSheet';
+import { TopographicPattern } from '../common/TopographicBackground';
 import {
   Sprout,
   Plus,
@@ -19,6 +20,8 @@ import {
   Calendar,
   Sparkles,
   CheckCircle2,
+  Flower2,
+  Trees,
 } from 'lucide-react';
 
 interface GrowthViewProps {
@@ -62,20 +65,21 @@ export const GrowthView: React.FC<GrowthViewProps> = ({
   // EMPTY STATE (0 people in journal)
   if (people.length === 0) {
     return (
-      <div className="space-y-8 animate-in fade-in duration-200">
-        {/* Header */}
-        <div className="space-y-1.5 border-b border-[#DCDDD5] pb-4">
-          <div className="flex items-center gap-2">
+      <div className="space-y-8 max-w-2xl mx-auto pb-20 animate-in fade-in duration-200">
+        {/* Editorial Header */}
+        <div className="relative bg-[#FCFBF8] border border-[#DCDDD5] rounded-[18px] p-6 overflow-hidden shadow-2xs">
+          <TopographicPattern opacity={0.07} />
+          <div className="relative z-10 space-y-1">
             <span className="text-[10px] font-mono uppercase font-bold tracking-widest text-[#B87545]">
               CULTIVATION & FIELD CARE
             </span>
+            <h1 className="font-display font-bold text-2xl sm:text-3xl text-[#17201E] tracking-tight">
+              Your Garden
+            </h1>
+            <p className="text-xs text-[#68716D]">
+              Every connection takes root somewhere.
+            </p>
           </div>
-          <h1 className="font-display font-bold text-2xl sm:text-3xl text-[#17201E] tracking-tight">
-            Your Garden
-          </h1>
-          <p className="text-xs text-[#68716D]">
-            Every connection takes root somewhere.
-          </p>
         </div>
 
         {/* Botanical Empty State Hero */}
@@ -108,77 +112,65 @@ export const GrowthView: React.FC<GrowthViewProps> = ({
   }
 
   return (
-    <div className="space-y-7 animate-in fade-in duration-200">
-      {/* 1. EDITORIAL HEADER */}
-      <div className="space-y-3 border-b border-[#DCDDD5] pb-5">
-        <div>
-          <span className="text-[10px] font-mono uppercase font-bold tracking-widest text-[#B87545]">
-            CULTIVATION & FIELD CARE
-          </span>
-        </div>
+    <div className="space-y-6 max-w-2xl mx-auto pb-20 animate-in fade-in duration-200">
+      {/* 1. EDITORIAL GARDEN HERO HEADER */}
+      <div className="relative bg-[#FCFBF8] border border-[#DCDDD5] rounded-[18px] p-6 sm:p-7 overflow-hidden shadow-2xs select-none">
+        <TopographicPattern opacity={0.07} />
 
-        <div>
-          <h1 className="font-display font-bold text-2xl sm:text-3xl text-[#17201E] tracking-tight">
-            Your Garden
-          </h1>
-          <p className="text-xs text-[#68716D] mt-1">
-            Every connection takes root somewhere.
-          </p>
-        </div>
+        <div className="relative z-10 space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <span className="text-[10px] font-mono uppercase font-bold tracking-widest text-[#B87545]">
+                CULTIVATION & FIELD CARE
+              </span>
+              <h1 className="font-display font-bold text-2xl sm:text-3xl text-[#17201E] tracking-tight">
+                Your Garden
+              </h1>
+              <p className="text-xs text-[#68716D]">
+                Every connection takes root somewhere.
+              </p>
+            </div>
 
-        {/* Compact Editorial Stats Summary */}
-        <div className="pt-2 flex flex-wrap items-baseline gap-x-5 gap-y-2 text-xs text-[#17201E]">
-          <div className="flex items-baseline gap-1.5">
-            <span className="font-display font-bold text-lg text-[#183A35] tabular-nums">
-              {summary.totalPeople}
-            </span>
-            <span className="text-[#68716D] font-medium">total people</span>
+            <div className="w-12 h-12 rounded-[14px] bg-[#183A35]/10 border border-[#183A35]/20 flex items-center justify-center text-[#183A35] shrink-0 shadow-2xs">
+              <Trees className="w-6 h-6" />
+            </div>
           </div>
 
-          <span className="text-[#DCDDD5] hidden sm:inline">·</span>
+          {/* Elegant Stats Summary Cards Bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-[#DCDDD5]/60">
+            <div className="p-3 bg-white/80 border border-[#DCDDD5] rounded-[12px] space-y-0.5">
+              <div className="text-[10px] font-mono text-[#68716D] uppercase font-semibold">Total Specimen</div>
+              <div className="font-display text-xl font-bold text-[#183A35] tabular-nums">{summary.totalPeople}</div>
+            </div>
 
-          <div className="flex items-baseline gap-1.5">
-            <span className="font-display font-bold text-lg text-[#183A35] tabular-nums">
-              {summary.growing}
-            </span>
-            <span className="text-[#68716D] font-medium">growing</span>
-          </div>
+            <div className="p-3 bg-white/80 border border-[#DCDDD5] rounded-[12px] space-y-0.5">
+              <div className="text-[10px] font-mono text-[#68716D] uppercase font-semibold">Growing</div>
+              <div className="font-display text-xl font-bold text-[#183A35] tabular-nums">{summary.growing}</div>
+            </div>
 
-          <span className="text-[#DCDDD5] hidden sm:inline">·</span>
+            <div className="p-3 bg-white/80 border border-[#DCDDD5] rounded-[12px] space-y-0.5">
+              <div className="text-[10px] font-mono text-[#68716D] uppercase font-semibold">Flowering</div>
+              <div className="font-display text-xl font-bold text-[#B99A62] tabular-nums">{summary.flowering}</div>
+            </div>
 
-          <div className="flex items-baseline gap-1.5">
-            <span className="font-display font-bold text-lg text-[#B99A62] tabular-nums">
-              {summary.flowering}
-            </span>
-            <span className="text-[#68716D] font-medium">flowering</span>
-          </div>
-
-          <span className="text-[#DCDDD5] hidden sm:inline">·</span>
-
-          <div className="flex items-baseline gap-1.5">
-            <span className="font-display font-bold text-lg text-[#B87545] tabular-nums">
-              {summary.bearingFruit}
-            </span>
-            <span className="text-[#68716D] font-medium">bearing fruit</span>
+            <div className="p-3 bg-white/80 border border-[#DCDDD5] rounded-[12px] space-y-0.5">
+              <div className="text-[10px] font-mono text-[#68716D] uppercase font-semibold">Bearing Fruit</div>
+              <div className="font-display text-xl font-bold text-[#B87545] tabular-nums">{summary.bearingFruit}</div>
+            </div>
           </div>
 
           {summary.needsCareCount > 0 && (
-            <>
-              <span className="text-[#DCDDD5] hidden sm:inline">·</span>
-              <div className="flex items-baseline gap-1.5 text-[#B87545]">
-                <span className="font-display font-bold text-lg tabular-nums">
-                  {summary.needsCareCount}
-                </span>
-                <span className="font-semibold underline underline-offset-2">
-                  need care
-                </span>
-              </div>
-            </>
+            <div className="flex items-center gap-2 p-3 bg-[#B87545]/10 border border-[#B87545]/30 rounded-[12px] text-xs text-[#B87545]">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span className="font-semibold">
+                {summary.needsCareCount} {summary.needsCareCount === 1 ? 'specimen needs' : 'specimens need'} attention & follow-up care.
+              </span>
+            </div>
           )}
         </div>
       </div>
 
-      {/* 2. THE MAIN BOTANICAL GARDEN HERO */}
+      {/* 2. THE MAIN BOTANICAL GARDEN MEADOW HERO */}
       <BotanicalGardenHero
         plants={plants}
         summary={summary}
@@ -207,8 +199,8 @@ export const GrowthView: React.FC<GrowthViewProps> = ({
                 onClick={() => onSelectPerson(plant.person.id)}
                 className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-[#F5F3ED] transition-colors text-left group"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-[10px] bg-[#F5F3ED] border border-[#DCDDD5] flex items-center justify-center shrink-0">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="w-10 h-10 rounded-[12px] bg-[#F5F3ED] border border-[#DCDDD5] flex items-center justify-center shrink-0 shadow-2xs">
                     <BotanicalPlantGlyph stage={plant.stage} health={plant.health} size="sm" />
                   </div>
 
@@ -224,7 +216,7 @@ export const GrowthView: React.FC<GrowthViewProps> = ({
                   </div>
                 </div>
 
-                <ChevronRight className="w-4 h-4 text-[#68716D] group-hover:text-[#183A35] shrink-0 ml-2" />
+                <ChevronRight className="w-4 h-4 text-[#68716D] group-hover:text-[#183A35] shrink-0 ml-2 group-hover:translate-x-0.5 transition-transform" />
               </button>
             ))}
           </div>
@@ -250,14 +242,14 @@ export const GrowthView: React.FC<GrowthViewProps> = ({
             return (
               <div
                 key={milestone.id}
-                className={`p-3.5 rounded-[14px] border transition-colors flex items-start gap-3 ${
+                className={`p-3.5 rounded-[14px] border transition-colors flex items-start gap-3.5 ${
                   milestone.isEarned
                     ? 'bg-[#FCFBF8] border-[#183A35]/30 shadow-2xs'
                     : 'bg-[#F5F3ED]/60 border-[#DCDDD5] opacity-65'
                 }`}
               >
                 <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+                  className={`w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 mt-0.5 ${
                     milestone.isEarned
                       ? 'bg-[#183A35] text-white shadow-2xs'
                       : 'bg-[#DCDDD5]/60 text-[#68716D]'

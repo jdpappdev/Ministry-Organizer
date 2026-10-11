@@ -67,23 +67,23 @@ export const RescheduleFollowUpModal: React.FC<RescheduleFollowUpModalProps> = (
       aria-labelledby="reschedule-modal-title"
     >
       <div
-        className="relative w-full max-w-xs sm:max-w-sm bg-[#FCFBF8] border border-[#DCDDD5] rounded-[18px] p-5 shadow-xl space-y-4 animate-in zoom-in-95 duration-150"
+        className="relative w-full max-w-xs sm:max-w-sm bg-[#FCFBF8] border border-[#D6CBB8] rounded-[20px] p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150 floating-paper-card"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#DCDDD5]/60 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[#183A35] flex items-center justify-center text-white shrink-0">
-              <Calendar className="w-3.5 h-3.5" />
+        <div className="flex items-center justify-between border-b border-[#D6CBB8]/80 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-[10px] bg-[#1F3D36] text-[#F6F1E5] flex items-center justify-center shrink-0 shadow-2xs border border-[#1F3D36]/15">
+              <Calendar className="w-4 h-4 text-[#C9A978]" />
             </div>
-            <h3 id="reschedule-modal-title" className="font-display font-bold text-base text-[#17201E]">
+            <h3 id="reschedule-modal-title" className="font-display font-bold text-base text-[#1B2421]">
               Reschedule follow-up
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-[#68716D] hover:text-[#17201E] rounded-lg transition-colors"
+            className="w-8 h-8 flex items-center justify-center text-[#5F6B66] hover:text-[#1B2421] hover:bg-[#E9E2D3] rounded-lg transition-colors"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
@@ -92,41 +92,41 @@ export const RescheduleFollowUpModal: React.FC<RescheduleFollowUpModalProps> = (
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1">
-            <div className="text-xs font-semibold text-[#17201E] uppercase font-display tracking-tight">
+          <div className="space-y-1 p-3 rounded-[12px] bg-[#E9E2D3]/50 border border-[#D6CBB8]">
+            <div className="text-xs font-semibold text-[#1B2421] uppercase font-display tracking-tight">
               {personName}
             </div>
-            <p className="text-xs text-[#68716D]">
-              Currently: <span className="font-semibold text-[#183A35]">{formattedCurrentDate}</span>
+            <p className="text-xs text-[#5F6B66]">
+              Currently scheduled: <span className="font-semibold text-[#1F3D36]">{formattedCurrentDate}</span>
             </p>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#17201E] mb-1">
-              New date:
+            <label className="block text-xs font-semibold text-[#1B2421] mb-1">
+              Select new follow-up date:
             </label>
             <input
               type="date"
               required
               value={newDate}
               onChange={(e) => setNewDate(e.target.value)}
-              className="w-full h-11 px-3.5 text-xs font-medium bg-white border border-[#DCDDD5] rounded-[10px] focus:outline-none focus:border-[#183A35]"
+              className="w-full h-11 px-3.5 text-xs font-medium bg-white border border-[#D6CBB8] rounded-[10px] focus:outline-none focus:border-[#1F3D36] text-[#1B2421]"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[#DCDDD5]/60">
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#D6CBB8]/80">
             <button
               type="button"
               onClick={onClose}
-              className="h-10 px-4 text-xs font-semibold text-[#68716D] hover:text-[#17201E] rounded-[10px]"
+              className="h-10 px-4 text-xs font-semibold text-[#5F6B66] hover:text-[#1B2421] rounded-[10px]"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="h-10 px-5 text-xs font-semibold text-white bg-[#183A35] hover:bg-[#102C29] active:scale-95 rounded-[10px] transition-all shadow-xs"
+              className="h-10 px-5 text-xs font-semibold text-[#F6F1E5] bg-[#1F3D36] hover:bg-[#102C29] active:scale-95 rounded-[10px] transition-all shadow-xs paper-button"
             >
-              Save
+              Reschedule
             </button>
           </div>
         </form>

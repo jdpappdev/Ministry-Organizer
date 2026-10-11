@@ -5,8 +5,6 @@ import {
   ChevronRight,
   ChevronLeft,
   AlertCircle,
-  MapPin,
-  Filter,
   RotateCw,
 } from 'lucide-react';
 import { Person, Visit, Territory } from '../../types';
@@ -99,7 +97,10 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 
   // Categorize
   const overdue = useMemo(
-    () => territoryFilteredFollowUps.filter((f) => f.date < todayStr).sort((a, b) => a.date.localeCompare(b.date)),
+    () =>
+      territoryFilteredFollowUps
+        .filter((f) => f.date < todayStr)
+        .sort((a, b) => a.date.localeCompare(b.date)),
     [territoryFilteredFollowUps, todayStr]
   );
 
@@ -109,7 +110,10 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   );
 
   const upcoming = useMemo(
-    () => territoryFilteredFollowUps.filter((f) => f.date > todayStr).sort((a, b) => a.date.localeCompare(b.date)),
+    () =>
+      territoryFilteredFollowUps
+        .filter((f) => f.date > todayStr)
+        .sort((a, b) => a.date.localeCompare(b.date)),
     [territoryFilteredFollowUps, todayStr]
   );
 
@@ -118,12 +122,12 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     [territoryFilteredFollowUps, selectedDate]
   );
 
-  // Date Navigation Helpers
-  const handleShiftDay = (deltaDays: number) => {
-    const current = parseLocalDateKey(selectedDate);
-    current.setDate(current.getDate() + deltaDays);
-    const newDateStr = getLocalDateKey(current);
-    setSelectedDate(newDateStr);
+  // Day shifting for horizontal scroller
+  const handleShiftDay = (direction: -1 | 1) => {
+    const cur = parseLocalDateKey(selectedDate);
+    cur.setDate(cur.getDate() + direction);
+    const newKey = getLocalDateKey(cur);
+    setSelectedDate(newKey);
     setFilterCategory('date');
   };
 
@@ -132,20 +136,15 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     setFilterCategory('date');
   };
 
-  const handleResetToToday = () => {
-    setSelectedDate(todayStr);
-    setFilterCategory('today');
-  };
-
-  // Generate 7-day horizontal strip around selectedDate
+  // Generate 7-day strip centered on selectedDate
   const dateStripDays = useMemo(() => {
     const center = parseLocalDateKey(selectedDate);
-    const days = [];
-    for (let i = -3; i <= 3; i++) {
+    const days: { dateStr: string; dayName: string; dayNum: number }[] = [];
+    for (let offset = -3; offset <= 3; offset++) {
       const d = new Date(center);
-      d.setDate(center.getDate() + i);
+      d.setDate(center.getDate() + offset);
       const dateStr = getLocalDateKey(d);
-      const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+      const dayName = d.toLocaleDateString('en-US', { weekday: 'narrow' });
       const dayNum = d.getDate();
       days.push({ dateStr, dayName, dayNum });
     }
@@ -165,7 +164,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 
   const selectedDateMonthYear = useMemo(() => {
     const d = parseLocalDateKey(selectedDate);
-    return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase();
+    return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   }, [selectedDate]);
 
   const renderFollowUpItem = (item: ActiveFollowUp, isOverdue = false, isTodayItem = false) => {
@@ -173,64 +172,66 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
       <div
         key={`${item.personId}-${item.visitId}`}
         onClick={() => onSelectPerson(item.personId)}
-        className="py-2.5 px-2 sm:px-3 flex items-start gap-3.5 cursor-pointer hover:bg-[#FCFBF8] active:bg-[#F5F3ED] transition-colors group"
+        className="list-card p-4 flex items-start gap-4 cursor-pointer group select-none"
       >
         {/* Date Column */}
         <EditorialDate dateString={item.date} format="column" />
 
         {/* Main Content Area */}
-        <div className="min-w-0 flex-1 space-y-0.5">
-          {/* Row 1: Person Name (Full available width) + Chevron on far right */}
+        <div className="min-w-0 flex-1 space-y-1">
+          {/* Row 1: Person Name + Chevron on far right */}
           <div className="flex items-center justify-between gap-2">
-            <span className="font-display font-bold text-sm uppercase tracking-tight text-[#17201E] group-hover:text-[#183A35] truncate min-w-0">
+            <span className="font-display font-bold text-base text-[#1B2421] group-hover:text-[#1F3D36] truncate min-w-0">
               {item.personName}
             </span>
-            <ChevronRight className="w-4 h-4 text-[#68716D] group-hover:text-[#183A35] group-hover:translate-x-0.5 transition-transform shrink-0" />
+            <div className="w-8 h-8 rounded-full bg-[#F5F1E8] flex items-center justify-center text-[#5F6B66] group-hover:text-[#1F3D36] transition-colors shrink-0">
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </div>
           </div>
 
           {/* Row 2: Territory */}
           {item.territoryName && (
-            <div className="text-[10px] font-mono uppercase font-semibold text-[#68716D] truncate">
+            <div className="text-[11px] font-mono uppercase font-semibold text-[#5F6B66] truncate">
               {item.territoryName}{item.territoryCode ? ` · T${item.territoryCode}` : ''}
             </div>
           )}
 
           {/* Row 3: Topic & Status Metadata */}
-          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-[#68716D] pt-0.5">
-            <span className="font-medium text-[#183A35] truncate max-w-[180px] sm:max-w-[280px]">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#5F6B66] pt-0.5">
+            <span className="font-medium text-[#1F3D36] truncate max-w-[200px] sm:max-w-[300px]">
               "{item.topic}"
             </span>
-            <span className="text-[#DCDDD5]">·</span>
+            <span>·</span>
             {isOverdue && (
-              <span className="text-[#B87545] font-semibold flex items-center gap-1">
+              <span className="pill-overdue">
                 <AlertCircle className="w-3 h-3 shrink-0" />
-                Overdue follow-up
+                <span>Overdue follow-up</span>
               </span>
             )}
             {isTodayItem && (
-              <span className="text-[#183A35] font-semibold flex items-center gap-1">
-                <Clock className="w-3 h-3 text-[#B99A62] shrink-0" />
-                Scheduled today
+              <span className="pill-neutral-sage">
+                <Clock className="w-3 h-3 shrink-0" />
+                <span>Scheduled today</span>
               </span>
             )}
             {!isOverdue && !isTodayItem && (
-              <span className="font-mono text-[11px] text-[#68716D]">
+              <span className="font-mono text-[11px] text-[#5F6B66]">
                 Visited {formatVisitedDate(item.visitDate)}
               </span>
             )}
           </div>
 
-          {/* Row 4: Reschedule Action — Compact outlined button on its own line below */}
-          <div className="pt-1.5 flex items-center">
+          {/* Row 4: Reschedule Action Button */}
+          <div className="pt-2 flex items-center">
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 setSelectedRescheduleItem(item);
               }}
-              className="h-7 px-2.5 text-[11px] font-semibold text-[#183A35] bg-white border border-[#DCDDD5] hover:bg-[#F5F3ED] hover:border-[#183A35] active:scale-95 rounded-[8px] transition-all flex items-center gap-1.5 shadow-2xs"
+              className="btn-tactile-secondary h-8 px-3 text-xs gap-1.5"
             >
-              <RotateCw className="w-3 h-3 text-[#183A35]" />
+              <RotateCw className="w-3 h-3 text-[#1F3D36]" />
               <span>Reschedule</span>
             </button>
           </div>
@@ -245,62 +246,62 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
       <div className="space-y-3 pt-1">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#17201E]">
+            <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#1B2421]">
               Schedule
             </h1>
-            <p className="text-xs font-medium text-[#68716D] mt-0.5">
-              Field agenda & planned return visits
+            <p className="text-xs font-medium text-[#5F6B66] mt-0.5">
+              {territoryFilteredFollowUps.length} follow-up {territoryFilteredFollowUps.length === 1 ? 'visit' : 'visits'} planned
             </p>
           </div>
 
-          {/* Territory Filter Dropdown */}
-          <div className="w-44">
-            <Select
-              value={selectedTerritoryId}
-              onChange={(val) => setSelectedTerritoryId(val)}
-              size="sm"
-              options={[
-                { value: 'all', label: 'All Territories' },
-                ...territories.map((t) => ({
-                  value: t.id,
-                  label: `${t.name}${t.code ? ` (T${t.code})` : ''}`,
-                })),
-              ]}
-              ariaLabel="Filter by territory"
-            />
-          </div>
+          {/* Territory filter */}
+          {territories.length > 0 && (
+            <div className="w-44">
+              <Select
+                value={selectedTerritoryId}
+                onChange={(val) => setSelectedTerritoryId(val)}
+                options={[
+                  { value: 'all', label: `All Territories (${territories.length})` },
+                  ...territories.map((t) => ({
+                    value: t.id,
+                    label: `${t.code ? `T${t.code}: ` : ''}${t.name}`,
+                  })),
+                ]}
+                ariaLabel="Filter schedule by territory"
+              />
+            </div>
+          )}
         </div>
 
-        {/* 2. COMPACT EDITORIAL DATE NAVIGATOR */}
-        <div className="bg-[#FCFBF8] border border-[#DCDDD5] rounded-[14px] p-3 space-y-3 shadow-2xs">
+        {/* 2. CALENDAR HERO STRIP: Level 1 Raised Card */}
+        <div className="level-1-raised p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#B87545]">
-              {selectedDateMonthYear}
-            </span>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-[#1F3D36]" />
+              <span className="font-display font-bold text-sm text-[#1B2421]">
+                {selectedDateMonthYear}
+              </span>
+            </div>
 
             <div className="flex items-center gap-2">
-              {selectedDate !== todayStr && (
-                <button
-                  onClick={handleResetToToday}
-                  className="h-7 px-2.5 text-[11px] font-semibold text-[#183A35] bg-[#F5F3ED] hover:bg-[#183A35] hover:text-white rounded-[6px] transition-colors"
-                >
-                  Today
-                </button>
-              )}
-              <div className="flex items-center gap-1 bg-[#F5F3ED] rounded-[8px] p-0.5 border border-[#DCDDD5]/60">
+              <button
+                onClick={() => handleSelectSpecificDate(todayStr)}
+                className="text-xs font-semibold px-2.5 py-1 rounded-[8px] bg-[#F5F1E8] text-[#1F3D36] border border-[#E6E0D2] hover:bg-[#ECE7DC] transition-colors cursor-pointer"
+              >
+                Today
+              </button>
+
+              <div className="flex items-center gap-1">
                 <button
                   onClick={() => handleShiftDay(-1)}
-                  className="p-1 text-[#68716D] hover:text-[#17201E] rounded transition-colors"
+                  className="w-8 h-8 flex items-center justify-center text-[#5F6B66] hover:text-[#1B2421] rounded-lg transition-colors cursor-pointer"
                   aria-label="Previous Day"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
-                <span className="text-xs font-mono font-bold text-[#17201E] px-1.5 min-w-[70px] text-center">
-                  {selectedDateFormatted.split(',')[0]} {selectedDateFormatted.split(',')[1]}
-                </span>
                 <button
                   onClick={() => handleShiftDay(1)}
-                  className="p-1 text-[#68716D] hover:text-[#17201E] rounded transition-colors"
+                  className="w-8 h-8 flex items-center justify-center text-[#5F6B66] hover:text-[#1B2421] rounded-lg transition-colors cursor-pointer"
                   aria-label="Next Day"
                 >
                   <ChevronRight className="w-4 h-4" />
@@ -310,7 +311,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
           </div>
 
           {/* 3. HORIZONTAL DATE STRIP */}
-          <div className="grid grid-cols-7 gap-1 pt-1 border-t border-[#DCDDD5]/60">
+          <div className="grid grid-cols-7 gap-1 pt-1 border-t border-[#E6E0D2]/70">
             {dateStripDays.map((day) => {
               const isSelected = day.dateStr === selectedDate;
               const isToday = day.dateStr === todayStr;
@@ -319,25 +320,25 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                 <button
                   key={day.dateStr}
                   onClick={() => handleSelectSpecificDate(day.dateStr)}
-                  className={`py-1.5 px-1 rounded-[10px] flex flex-col items-center transition-all ${
+                  className={`py-2 px-1 rounded-[12px] flex flex-col items-center transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-[#183A35] text-white shadow-2xs'
-                      : 'hover:bg-[#F5F3ED] text-[#68716D]'
+                      ? 'bg-[#1F3D36] text-white shadow-sm'
+                      : 'hover:bg-[#F5F1E8] text-[#5F6B66]'
                   }`}
                 >
                   <span className={`text-[10px] font-mono uppercase font-bold ${
-                    isSelected ? 'text-[#B99A62]' : 'text-[#68716D]'
+                    isSelected ? 'text-[#9DB3A5]' : 'text-[#5F6B66]'
                   }`}>
                     {isToday ? 'TODAY' : day.dayName}
                   </span>
-                  <span className={`text-sm font-display font-bold leading-tight mt-0.5 ${
-                    isSelected ? 'text-white' : 'text-[#17201E]'
+                  <span className={`text-base font-display font-bold leading-tight mt-0.5 ${
+                    isSelected ? 'text-white' : 'text-[#1B2421]'
                   }`}>
                     {day.dayNum}
                   </span>
                   {isToday && (
-                    <span className={`w-1 h-1 rounded-full mt-1 ${
-                      isSelected ? 'bg-[#B99A62]' : 'bg-[#183A35]'
+                    <span className={`w-1.5 h-1.5 rounded-full mt-1 ${
+                      isSelected ? 'bg-[#9DB3A5]' : 'bg-[#1F3D36]'
                     }`} />
                   )}
                 </button>
@@ -347,46 +348,40 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
         </div>
       </div>
 
-      {/* 4. LIGHTWEIGHT CATEGORY FILTERS */}
-      <div className="flex items-center p-1 bg-[#FCFBF8] border border-[#DCDDD5] rounded-[12px] overflow-x-auto">
+      {/* 4. PAPER TABS: Overlapping file tabs with 180ms ease-out */}
+      <div className="flex items-end gap-1.5 border-b border-[#E6E0D2] px-1 overflow-x-auto pt-1">
         <button
           onClick={() => setFilterCategory('all')}
-          className={`flex-1 h-8 text-xs font-semibold rounded-[8px] transition-colors whitespace-nowrap px-3 ${
-            filterCategory === 'all'
-              ? 'bg-[#183A35] text-white shadow-2xs'
-              : 'text-[#68716D] hover:text-[#17201E]'
+          className={`paper-tab px-4 py-2.5 text-xs font-semibold whitespace-nowrap cursor-pointer ${
+            filterCategory === 'all' ? 'paper-tab-active' : 'paper-tab-inactive'
           }`}
         >
           All ({territoryFilteredFollowUps.length})
         </button>
         <button
           onClick={() => setFilterCategory('today')}
-          className={`flex-1 h-8 text-xs font-semibold rounded-[8px] transition-colors whitespace-nowrap px-3 ${
-            filterCategory === 'today'
-              ? 'bg-[#183A35] text-white shadow-2xs'
-              : 'text-[#68716D] hover:text-[#17201E]'
+          className={`paper-tab px-4 py-2.5 text-xs font-semibold whitespace-nowrap cursor-pointer ${
+            filterCategory === 'today' ? 'paper-tab-active' : 'paper-tab-inactive'
           }`}
         >
           Today ({todayList.length})
         </button>
         <button
           onClick={() => setFilterCategory('overdue')}
-          className={`flex-1 h-8 text-xs font-semibold rounded-[8px] transition-colors whitespace-nowrap px-3 ${
+          className={`paper-tab px-4 py-2.5 text-xs font-semibold whitespace-nowrap cursor-pointer ${
             filterCategory === 'overdue'
-              ? 'bg-[#183A35] text-white shadow-2xs'
+              ? 'paper-tab-active'
               : overdue.length > 0
-              ? 'text-[#B87545] font-bold hover:text-[#17201E]'
-              : 'text-[#68716D] hover:text-[#17201E]'
+              ? 'paper-tab-inactive text-[#C2571A] font-bold'
+              : 'paper-tab-inactive'
           }`}
         >
           Overdue ({overdue.length})
         </button>
         <button
           onClick={() => setFilterCategory('upcoming')}
-          className={`flex-1 h-8 text-xs font-semibold rounded-[8px] transition-colors whitespace-nowrap px-3 ${
-            filterCategory === 'upcoming'
-              ? 'bg-[#183A35] text-white shadow-2xs'
-              : 'text-[#68716D] hover:text-[#17201E]'
+          className={`paper-tab px-4 py-2.5 text-xs font-semibold whitespace-nowrap cursor-pointer ${
+            filterCategory === 'upcoming' ? 'paper-tab-active' : 'paper-tab-inactive'
           }`}
         >
           Upcoming ({upcoming.length})
@@ -394,7 +389,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
         {filterCategory === 'date' && (
           <button
             onClick={() => setFilterCategory('date')}
-            className="flex-1 h-8 text-xs font-semibold rounded-[8px] bg-[#B87545] text-white shadow-2xs whitespace-nowrap px-3"
+            className="paper-tab paper-tab-active px-4 py-2.5 text-xs font-semibold whitespace-nowrap cursor-pointer"
           >
             Date ({selectedDateList.length})
           </button>
@@ -403,28 +398,28 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 
       {/* 5. AGENDA CONTENT */}
       {territoryFilteredFollowUps.length === 0 ? (
-        <div className="bg-[#FCFBF8] border border-dashed border-[#DCDDD5] rounded-[16px] p-8 text-center text-xs text-[#68716D] space-y-1">
-          <p className="font-semibold text-sm text-[#17201E]">
+        <div className="bg-white border border-dashed border-[#E6E0D2] rounded-[16px] p-8 text-center text-xs text-[#5F6B66] space-y-1">
+          <p className="font-semibold text-sm text-[#1B2421]">
             {selectedTerritoryId !== 'all' ? 'No follow-ups in this territory' : 'No active follow-ups'}
           </p>
           <p>When you record field visits with follow-up dates, they automatically appear here.</p>
         </div>
       ) : filterCategory === 'date' ? (
         /* SPECIFIC DATE AGENDA VIEW */
-        <div className="space-y-3">
+        <div className="space-y-3.5">
           <div className="flex items-center justify-between px-1">
-            <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-[#183A35]">
+            <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-[#1F3D36]">
               {selectedDateFormatted} · {selectedDateList.length} {selectedDateList.length === 1 ? 'follow-up' : 'follow-ups'}
             </h2>
           </div>
 
           {selectedDateList.length === 0 ? (
-            <div className="bg-[#FCFBF8] border border-dashed border-[#DCDDD5] rounded-[16px] p-8 text-center text-xs text-[#68716D]">
-              <p className="font-semibold text-sm text-[#17201E] mb-0.5">No follow-ups today</p>
+            <div className="bg-white border border-dashed border-[#E6E0D2] rounded-[16px] p-8 text-center text-xs text-[#5F6B66]">
+              <p className="font-semibold text-sm text-[#1B2421] mb-0.5">No follow-ups today</p>
               <p>Your schedule is clear for this date.</p>
             </div>
           ) : (
-            <div className="divide-y divide-[#DCDDD5]/70 border-y border-[#DCDDD5]">
+            <div className="space-y-3.5">
               {selectedDateList.map((item) =>
                 renderFollowUpItem(item, item.date < todayStr, item.date === todayStr)
               )}
@@ -436,14 +431,14 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
         <div className="space-y-6">
           {/* OVERDUE */}
           {(filterCategory === 'all' || filterCategory === 'overdue') && overdue.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center gap-2 px-1">
-                <span className="w-2 h-2 rounded-full bg-[#B87545]" />
-                <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-[#B87545]">
-                  OVERDUE ({overdue.length})
+                <span className="w-2.5 h-2.5 rounded-full bg-[#C2571A]" />
+                <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-[#C2571A]">
+                  Overdue ({overdue.length})
                 </h2>
               </div>
-              <div className="divide-y divide-[#DCDDD5]/70 border-y border-[#DCDDD5]">
+              <div className="space-y-3.5">
                 {overdue.map((item) => renderFollowUpItem(item, true, false))}
               </div>
             </div>
@@ -451,14 +446,14 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 
           {/* TODAY */}
           {(filterCategory === 'all' || filterCategory === 'today') && todayList.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center gap-2 px-1">
-                <span className="w-2 h-2 rounded-full bg-[#B99A62]" />
-                <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-[#183A35]">
-                  TODAY ({todayList.length})
+                <span className="w-2.5 h-2.5 rounded-full bg-[#1F3D36]" />
+                <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-[#1F3D36]">
+                  Today ({todayList.length})
                 </h2>
               </div>
-              <div className="divide-y divide-[#DCDDD5]/70 border-y border-[#DCDDD5]">
+              <div className="space-y-3.5">
                 {todayList.map((item) => renderFollowUpItem(item, false, true))}
               </div>
             </div>
@@ -466,56 +461,36 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 
           {/* UPCOMING */}
           {(filterCategory === 'all' || filterCategory === 'upcoming') && upcoming.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center gap-2 px-1">
-                <span className="w-2 h-2 rounded-full bg-[#183A35]" />
-                <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-[#68716D]">
-                  UPCOMING ({upcoming.length})
+                <span className="w-2.5 h-2.5 rounded-full bg-[#5F6B66]" />
+                <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-[#5F6B66]">
+                  Upcoming ({upcoming.length})
                 </h2>
               </div>
-              <div className="divide-y divide-[#DCDDD5]/70 border-y border-[#DCDDD5]">
+              <div className="space-y-3.5">
                 {upcoming.map((item) => renderFollowUpItem(item, false, false))}
               </div>
-            </div>
-          )}
-
-          {/* Empty States */}
-          {filterCategory === 'overdue' && overdue.length === 0 && (
-            <div className="bg-[#FCFBF8] border border-dashed border-[#DCDDD5] rounded-[16px] p-8 text-center text-xs text-[#68716D]">
-              <p className="font-semibold text-sm text-[#17201E] mb-0.5">No overdue follow-ups</p>
-              <p>All field visit records are up to date.</p>
-            </div>
-          )}
-
-          {filterCategory === 'today' && todayList.length === 0 && (
-            <div className="bg-[#FCFBF8] border border-dashed border-[#DCDDD5] rounded-[16px] p-8 text-center text-xs text-[#68716D]">
-              <p className="font-semibold text-sm text-[#17201E] mb-0.5">No follow-ups today</p>
-              <p>Your schedule is clear for this date.</p>
-            </div>
-          )}
-
-          {filterCategory === 'upcoming' && upcoming.length === 0 && (
-            <div className="bg-[#FCFBF8] border border-dashed border-[#DCDDD5] rounded-[16px] p-8 text-center text-xs text-[#68716D]">
-              <p className="font-semibold text-sm text-[#17201E] mb-0.5">No upcoming follow-ups</p>
-              <p>No future return visits planned yet.</p>
             </div>
           )}
         </div>
       )}
 
-      {/* Reschedule Follow-Up Modal */}
-      <RescheduleFollowUpModal
-        isOpen={Boolean(selectedRescheduleItem)}
-        onClose={() => setSelectedRescheduleItem(null)}
-        personName={selectedRescheduleItem?.personName || ''}
-        currentDate={selectedRescheduleItem?.date || ''}
-        visitId={selectedRescheduleItem?.visitId || ''}
-        onSave={(vId, newDate) => {
-          if (onUpdateVisit) {
-            onUpdateVisit(vId, { nextFollowUpDate: newDate });
-          }
-        }}
-      />
+      {/* Reschedule Modal */}
+      {selectedRescheduleItem && (
+        <RescheduleFollowUpModal
+          isOpen={Boolean(selectedRescheduleItem)}
+          onClose={() => setSelectedRescheduleItem(null)}
+          personName={selectedRescheduleItem.personName}
+          currentDate={selectedRescheduleItem.date}
+          visitId={selectedRescheduleItem.visitId}
+          onSave={(vId, newDate) => {
+            if (onUpdateVisit) {
+              onUpdateVisit(vId, { nextFollowUpDate: newDate });
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

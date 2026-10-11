@@ -5,11 +5,13 @@ import {
   ChevronRight,
   User,
   X,
+  Users,
 } from 'lucide-react';
 import { Person, Territory, Visit, StatusType } from '../../types';
 import { StatusIndicator } from '../common/StatusIndicator';
 import { InitialsAvatar } from '../common/InitialsAvatar';
 import { Select } from '../common/Select';
+import { TopographicPattern } from '../common/TopographicBackground';
 
 interface PeopleViewProps {
   people: Person[];
@@ -77,26 +79,56 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
     return map;
   }, [visits]);
 
-  return (
-    <div className="space-y-5 max-w-2xl mx-auto pb-20">
-      {/* Header: PEOPLE & Count + Primary + Add Person Button */}
-      <div className="flex items-center justify-between gap-3 pt-1">
-        <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#17201E]">
-            People
-          </h1>
-          <p className="text-xs font-medium text-[#68716D] mt-0.5">
-            {filteredPeople.length} {filteredPeople.length === 1 ? 'record' : 'records'} in field journal
-          </p>
-        </div>
+  const activeCount = useMemo(() => people.filter((p) => p.status === 'active').length, [people]);
+  const needsAttentionCount = useMemo(() => people.filter((p) => p.status === 'needs_attention').length, [people]);
 
-        <button
-          onClick={onOpenAddPerson}
-          className="h-12 px-4.5 flex items-center justify-center gap-2 text-xs font-semibold text-white bg-[#183A35] hover:bg-[#102C29] active:scale-[0.98] rounded-[12px] transition-all shadow-xs shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Person</span>
-        </button>
+  return (
+    <div className="space-y-6 max-w-2xl mx-auto pb-20 animate-in fade-in duration-200">
+      {/* 1. EDITORIAL PEOPLE HERO HEADER */}
+      <div className="relative bg-[#FCFBF8] border border-[#DCDDD5] rounded-[18px] p-6 sm:p-7 overflow-hidden shadow-2xs select-none">
+        <TopographicPattern opacity={0.07} />
+
+        <div className="relative z-10 space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <span className="text-[10px] font-mono uppercase font-bold tracking-widest text-[#B87545]">
+                DIRECTORY & CONTACTS
+              </span>
+              <h1 className="font-display font-bold text-2xl sm:text-3xl text-[#17201E] tracking-tight">
+                People
+              </h1>
+              <p className="text-xs text-[#68716D]">
+                Field journal records & return visit contacts.
+              </p>
+            </div>
+
+            <button
+              onClick={onOpenAddPerson}
+              className="h-11 px-4 flex items-center justify-center gap-1.5 text-xs font-semibold text-white bg-[#183A35] hover:bg-[#102C29] active:scale-[0.98] rounded-[12px] transition-all shadow-xs shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Person</span>
+            </button>
+          </div>
+
+          {/* Stats Bar */}
+          <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-[#DCDDD5]/60">
+            <div className="p-3 bg-white/80 border border-[#DCDDD5] rounded-[12px] space-y-0.5">
+              <div className="text-[10px] font-mono text-[#68716D] uppercase font-semibold">Total</div>
+              <div className="font-display text-xl font-bold text-[#183A35] tabular-nums">{people.length}</div>
+            </div>
+
+            <div className="p-3 bg-white/80 border border-[#DCDDD5] rounded-[12px] space-y-0.5">
+              <div className="text-[10px] font-mono text-[#68716D] uppercase font-semibold">Active</div>
+              <div className="font-display text-xl font-bold text-[#183A35] tabular-nums">{activeCount}</div>
+            </div>
+
+            <div className="p-3 bg-white/80 border border-[#DCDDD5] rounded-[12px] space-y-0.5">
+              <div className="text-[10px] font-mono text-[#68716D] uppercase font-semibold">Follow-up</div>
+              <div className="font-display text-xl font-bold text-[#B87545] tabular-nums">{needsAttentionCount}</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Directory Search & Filter Bar */}
@@ -158,7 +190,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
         </div>
       </div>
 
-      {/* COMPACT & READABLE CONTINUOUS DIRECTORY (No Alphabetical Headers) */}
+      {/* COMPACT & READABLE CONTINUOUS DIRECTORY */}
       {filteredPeople.length === 0 ? (
         <div className="bg-[#FCFBF8] border border-dashed border-[#DCDDD5] rounded-[16px] p-10 text-center space-y-2">
           <User className="w-8 h-8 text-[#68716D] mx-auto opacity-40" />
@@ -180,7 +212,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           )}
         </div>
       ) : (
-        <div className="divide-y divide-[#DCDDD5]/70 border-y border-[#DCDDD5]">
+        <div className="divide-y divide-[#DCDDD5]/70 border-y border-[#DCDDD5] bg-[#FCFBF8] rounded-[16px] overflow-hidden shadow-2xs">
           {filteredPeople.map((person) => {
             const terr = territoryMap.get(person.territoryId);
             const latestVisit = latestVisits.get(person.id);
@@ -195,7 +227,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                     onSelectPerson(person.id);
                   }
                 }}
-                className="py-3 px-2 flex items-center justify-between gap-3 cursor-pointer hover:bg-[#FCFBF8] active:bg-[#F5F3ED] transition-colors group"
+                className="py-3.5 px-4 flex items-center justify-between gap-3 cursor-pointer hover:bg-[#F5F3ED] active:bg-[#EBE8DF] transition-colors group"
               >
                 <div className="flex items-center gap-3.5 min-w-0 flex-1">
                   <InitialsAvatar name={person.name} size="md" />

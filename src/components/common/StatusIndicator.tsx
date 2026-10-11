@@ -1,4 +1,5 @@
 import React from 'react';
+import { AlertCircle, CheckCircle2, Clock, Minus } from 'lucide-react';
 import { StatusType } from '../../types';
 
 interface StatusIndicatorProps {
@@ -13,31 +14,31 @@ export const STATUS_CONFIG: Record<
 > = {
   active: {
     label: 'Recently visited',
-    color: 'text-[#183A35]',
-    bg: 'bg-[#183A35]/8',
-    dot: 'bg-[#183A35]',
-    border: 'border-[#183A35]/25',
+    color: 'text-[#1F3D36]',
+    bg: 'bg-[#E9F0EC]',
+    dot: 'bg-[#1F3D36]',
+    border: 'border-[#D0DFD6]',
   },
   needs_attention: {
     label: 'Needs follow-up',
-    color: 'text-[#B87545]',
-    bg: 'bg-[#B87545]/10',
-    dot: 'bg-[#B87545]',
-    border: 'border-[#B87545]/25',
+    color: 'text-[#C2571A]',
+    bg: 'bg-[#FAF0EB]',
+    dot: 'bg-[#C2571A]',
+    border: 'border-[#F3D7C8]',
   },
   scheduled: {
     label: 'Scheduled',
-    color: 'text-[#B99A62]',
-    bg: 'bg-[#B99A62]/15',
-    dot: 'bg-[#B99A62]',
-    border: 'border-[#B99A62]/30',
+    color: 'text-[#446355]',
+    bg: 'bg-[#F0F4F1]',
+    dot: 'bg-[#446355]',
+    border: 'border-[#D5E1D9]',
   },
   inactive: {
     label: 'Inactive',
-    color: 'text-[#68716D]',
-    bg: 'bg-[#68716D]/10',
-    dot: 'bg-[#68716D]',
-    border: 'border-[#68716D]/20',
+    color: 'text-[#5F6B66]',
+    bg: 'bg-[#F5F1E8]',
+    dot: 'bg-[#5F6B66]',
+    border: 'border-[#E6E0D2]',
   },
 };
 
@@ -46,12 +47,27 @@ export const StatusIndicator: React.FC<StatusIndicatorProps> = ({
   showText = true,
   className = '',
 }) => {
+  const isOverdue = status === 'needs_attention';
+
+  if (isOverdue) {
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FAF0EB] text-[#C2571A] border border-[#F3D7C8] ${className}`}
+      >
+        <AlertCircle className="w-3 h-3 shrink-0 text-[#C2571A]" />
+        {showText && <span>Needs follow-up</span>}
+      </span>
+    );
+  }
+
   const config = STATUS_CONFIG[status] || STATUS_CONFIG.inactive;
 
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${config.color} ${className}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${config.bg} ${config.color} border ${config.border} ${className}`}
+    >
       <span
-        className={`w-2 h-2 rounded-full ${config.dot} shrink-0`}
+        className={`w-1.5 h-1.5 rounded-full ${config.dot} shrink-0`}
         aria-hidden="true"
       />
       {showText && <span>{config.label}</span>}

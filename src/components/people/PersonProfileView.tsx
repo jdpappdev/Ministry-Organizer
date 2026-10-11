@@ -129,9 +129,9 @@ export const PersonProfileView: React.FC<PersonProfileViewProps> = ({
         </div>
       </div>
 
-      {/* 2. PROFILE HERO SURFACE (Soft 18-20px radius, topographic accent, strong date marker) */}
-      <div className="relative bg-[#FCFBF8] border border-[#DCDDD5] rounded-[18px] p-6 sm:p-7 overflow-hidden shadow-2xs">
-        <TopographicPattern opacity={0.06} />
+      {/* 2. PROFILE HERO SURFACE (Level 1 raised, title-case name, strong date marker) */}
+      <div className="relative level-1-raised p-6 sm:p-7 overflow-hidden">
+        <TopographicPattern opacity={0.05} />
 
         <div className="relative z-10 space-y-4">
           <div className="flex items-start justify-between gap-4">
@@ -140,19 +140,19 @@ export const PersonProfileView: React.FC<PersonProfileViewProps> = ({
                 <StatusIndicator status={person.status} />
               </div>
 
-              <h1 className="font-display text-2xl sm:text-3xl font-bold uppercase tracking-tight text-[#17201E]">
+              <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#1B2421]">
                 {person.name}
               </h1>
 
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#68716D] pt-0.5">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#5F6B66] pt-0.5">
                 {territory && (
-                  <span className="font-bold uppercase text-[#183A35]">
+                  <span className="font-semibold text-[#1F3D36]">
                     {territory.name} · T{territory.code}
                   </span>
                 )}
                 <span>·</span>
-                <span className="flex items-center gap-1 font-medium text-[#17201E]">
-                  <MapPin className="w-3.5 h-3.5 text-[#B87545]" />
+                <span className="flex items-center gap-1 font-medium text-[#1B2421]">
+                  <MapPin className="w-3.5 h-3.5 text-[#1F3D36]" />
                   {person.address}
                 </span>
               </div>
@@ -163,31 +163,31 @@ export const PersonProfileView: React.FC<PersonProfileViewProps> = ({
 
           {/* Last Visit Editorial Anchor Line & Active Follow-up */}
           {latestVisit ? (
-            <div className="pt-2 border-t border-[#DCDDD5]/60 space-y-2">
+            <div className="pt-2 border-t border-[#E6E0D2] space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-3 min-w-0">
                   <EditorialDate dateString={latestVisit.visitDate || latestVisit.date} format="compact" />
-                  <span className="text-xs text-[#68716D] truncate">
-                    Last visited · <span className="text-[#183A35] font-semibold">"{latestVisit.topic}"</span>
+                  <span className="text-xs text-[#5F6B66] truncate">
+                    Last visited · <span className="text-[#1F3D36] font-semibold">"{latestVisit.topic}"</span>
                   </span>
                 </div>
               </div>
 
               {latestVisit.nextFollowUpDate && (
-                <div className="flex items-center justify-between bg-[#F5F3ED] border border-[#DCDDD5] rounded-[10px] p-2.5">
+                <div className="flex items-center justify-between bg-[#F5F1E8] border border-[#E6E0D2] rounded-[12px] p-2.5">
                   <div className="flex items-center gap-2 text-xs">
-                    <Calendar className="w-3.5 h-3.5 text-[#B99A62]" />
-                    <span className="font-semibold text-[#183A35]">
+                    <Calendar className="w-3.5 h-3.5 text-[#1F3D36]" />
+                    <span className="font-semibold text-[#1F3D36]">
                       Active follow-up: {latestVisit.nextFollowUpDate}
                     </span>
                     {latestVisit.nextTopic && (
-                      <span className="text-[#68716D] hidden sm:inline">({latestVisit.nextTopic})</span>
+                      <span className="text-[#5F6B66] hidden sm:inline">({latestVisit.nextTopic})</span>
                     )}
                   </div>
                   <button
                     type="button"
                     onClick={() => setIsRescheduleOpen(true)}
-                    className="h-7 px-2.5 text-[11px] font-semibold text-[#183A35] bg-white border border-[#DCDDD5] hover:border-[#183A35] rounded-[6px] transition-colors"
+                    className="btn-tactile-secondary h-8 px-3 text-xs"
                   >
                     Reschedule
                   </button>
@@ -195,7 +195,7 @@ export const PersonProfileView: React.FC<PersonProfileViewProps> = ({
               )}
             </div>
           ) : (
-            <div className="pt-2 border-t border-[#DCDDD5]/60 text-xs text-[#68716D] italic">
+            <div className="pt-2 border-t border-[#E6E0D2] text-xs text-[#5F6B66] italic">
               No visits recorded yet
             </div>
           )}
@@ -209,9 +209,9 @@ export const PersonProfileView: React.FC<PersonProfileViewProps> = ({
             setSelectedVisitToEdit(null);
             setIsVisitModalOpen(true);
           }}
-          className="h-12 flex items-center justify-center gap-2 text-xs font-semibold text-white bg-[#183A35] hover:bg-[#102C29] active:scale-[0.98] rounded-[12px] transition-all shadow-xs"
+          className="btn-tactile-primary text-xs"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4 mr-1" />
           <span>Record Visit</span>
         </button>
 
@@ -224,10 +224,10 @@ export const PersonProfileView: React.FC<PersonProfileViewProps> = ({
               setIsVisitModalOpen(true);
             }
           }}
-          className="h-12 flex items-center justify-center gap-2 text-xs font-semibold text-[#183A35] bg-[#FCFBF8] border border-[#DCDDD5] hover:border-[#183A35] active:scale-[0.98] rounded-[12px] transition-all shadow-xs"
+          className="btn-tactile-secondary text-xs"
         >
-          <Calendar className="w-4 h-4 text-[#B99A62]" />
-          <span>Schedule Visit</span>
+          <Calendar className="w-4 h-4 text-[#1F3D36] mr-1" />
+          <span>{latestVisit?.nextFollowUpDate ? 'Follow-Up' : 'Plan Visit'}</span>
         </button>
       </div>
 
@@ -326,17 +326,17 @@ export const PersonProfileView: React.FC<PersonProfileViewProps> = ({
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2.5 pt-2">
             <button
               type="button"
               onClick={() => setIsEditing(false)}
-              className="px-3.5 py-2 text-xs text-[#68716D]"
+              className="btn-tactile-secondary px-4 text-xs h-10"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4.5 py-2 text-xs font-semibold text-white bg-[#183A35] rounded-[10px]"
+              className="btn-tactile-primary px-5 text-xs h-10"
             >
               Save Changes
             </button>
@@ -421,26 +421,26 @@ export const PersonProfileView: React.FC<PersonProfileViewProps> = ({
         </div>
 
         {sortedVisits.length === 0 ? (
-          <div className="bg-[#FCFBF8] border border-dashed border-[#DCDDD5] rounded-[16px] p-8 text-center text-xs text-[#68716D] space-y-2">
-            <BookOpen className="w-6 h-6 mx-auto opacity-40 text-[#183A35]" />
-            <p className="font-medium text-[#17201E]">No visits recorded yet</p>
+          <div className="bg-white border border-dashed border-[#E6E0D2] rounded-[16px] p-8 text-center text-xs text-[#5F6B66] space-y-2">
+            <BookOpen className="w-6 h-6 mx-auto opacity-40 text-[#1F3D36]" />
+            <p className="font-semibold text-sm text-[#1B2421]">No visits recorded yet</p>
             <p>Log your initial conversation and scriptural notes.</p>
           </div>
         ) : (
-          <div className="divide-y divide-[#DCDDD5]/70 border-y border-[#DCDDD5]">
+          <div className="space-y-3.5">
             {sortedVisits.map((visit) => {
               const details = visit.conversationDetails || visit.conversation;
               const dateVal = visit.visitDate || visit.date;
 
               return (
-                <div key={visit.id} className="py-4 px-1 flex items-start gap-4 group">
+                <div key={visit.id} className="list-card p-4 flex items-start gap-4 group select-none">
                   {/* Editorial Column Date Marker */}
                   <EditorialDate dateString={dateVal} format="column" />
 
                   {/* Content */}
                   <div className="space-y-1.5 min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="font-display font-bold text-sm uppercase text-[#183A35]">
+                      <span className="font-display font-bold text-base text-[#1F3D36]">
                         {visit.topic}
                       </span>
 
@@ -451,7 +451,7 @@ export const PersonProfileView: React.FC<PersonProfileViewProps> = ({
                             setSelectedVisitToEdit(visit);
                             setIsVisitModalOpen(true);
                           }}
-                          className="p-1 text-[#68716D] hover:text-[#183A35] transition-colors"
+                          className="w-8 h-8 rounded-full bg-[#F5F1E8] flex items-center justify-center text-[#5F6B66] hover:text-[#1F3D36] transition-colors cursor-pointer"
                           title="Edit this visit"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -460,22 +460,22 @@ export const PersonProfileView: React.FC<PersonProfileViewProps> = ({
                     </div>
 
                     {details && (
-                      <p className="text-xs text-[#17201E]/90 leading-relaxed whitespace-pre-wrap">
+                      <p className="text-xs text-[#1B2421]/90 leading-relaxed whitespace-pre-wrap">
                         {details}
                       </p>
                     )}
 
                     {visit.nextTopic && (
-                      <div className="text-xs text-[#B87545] font-semibold pt-0.5">
+                      <div className="text-xs text-[#5F6B66] font-medium pt-0.5">
                         Next: {visit.nextTopic}
                       </div>
                     )}
 
                     {(visit.nextFollowUpDate || visit.remarks) && (
-                      <div className="pt-0.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-[#68716D]">
+                      <div className="pt-0.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-[#5F6B66]">
                         {visit.nextFollowUpDate && (
-                          <span className="flex items-center gap-1 font-mono">
-                            <Calendar className="w-3 h-3 text-[#B99A62]" />
+                          <span className="flex items-center gap-1 font-mono font-medium">
+                            <Calendar className="w-3 h-3 text-[#1F3D36]" />
                             <span>Planned: {visit.nextFollowUpDate}</span>
                           </span>
                         )}

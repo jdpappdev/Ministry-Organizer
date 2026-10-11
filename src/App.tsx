@@ -200,6 +200,7 @@ export default function App() {
           onNavigateTab={handleTabChange}
           onPreviewPerson={(p) => setPreviewPerson(p)}
           userName={userName}
+          onUpdateVisit={handleUpdateVisit}
         />
       )}
 
@@ -267,16 +268,7 @@ export default function App() {
         />
       )}
 
-      {/* SCHEDULE VIEW (Derived 100% from visits) */}
-      {currentTab === 'schedule' && (
-        <ScheduleView
-          people={people}
-          visits={visits}
-          territories={territories}
-          onSelectPerson={handleSelectPerson}
-          onUpdateVisit={handleUpdateVisit}
-        />
-      )}
+
 
       {/* GROWTH VIEW (Living Botanical Garden) */}
       {currentTab === 'growth' && (

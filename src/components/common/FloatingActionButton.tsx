@@ -19,7 +19,7 @@ export const FloatingActionButton: React.FC<FABProps> = ({
       {/* Backdrop when menu is open */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-[#102C29]/30 backdrop-blur-2xs transition-opacity duration-150"
+          className="fixed inset-0 z-40 bg-[#1B2421]/45 transition-opacity duration-150"
           onClick={() => setIsOpen(false)}
           aria-hidden="true"
         />
@@ -28,16 +28,16 @@ export const FloatingActionButton: React.FC<FABProps> = ({
       <div className="fixed bottom-20 right-4 z-40 flex flex-col items-end gap-2.5">
         {/* Expanded Quick Options */}
         {isOpen && (
-          <div className="flex flex-col items-end gap-2 mb-1 animate-in fade-in slide-in-from-bottom-2 duration-150">
+          <div className="flex flex-col items-end gap-2.5 mb-1 animate-floating-card">
             <button
               onClick={() => {
                 setIsOpen(false);
                 onAddPerson();
               }}
-              className="flex items-center gap-3 px-4 py-3 bg-[#FCFBF8] border border-[#DCDDD5] text-[#17201E] hover:text-[#183A35] rounded-[14px] shadow-md text-xs font-semibold active:scale-95 transition-all"
+              className="flex items-center gap-3 px-4 py-3 bg-white border border-[#E6E0D2] text-[#1B2421] hover:text-[#1F3D36] rounded-[16px] shadow-[0_1px_2px_rgba(27,36,33,0.06),0_6px_16px_rgba(27,36,33,0.08)] text-xs font-semibold active:scale-[0.985] transition-all cursor-pointer"
             >
               <span>Add Person</span>
-              <div className="w-7 h-7 rounded-[8px] bg-[#183A35]/10 text-[#183A35] flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl bg-[#1F3D36]/10 text-[#1F3D36] flex items-center justify-center">
                 <UserPlus className="w-4 h-4" />
               </div>
             </button>
@@ -47,10 +47,10 @@ export const FloatingActionButton: React.FC<FABProps> = ({
                 setIsOpen(false);
                 onRecordVisit();
               }}
-              className="flex items-center gap-3 px-4 py-3 bg-[#FCFBF8] border border-[#DCDDD5] text-[#17201E] hover:text-[#183A35] rounded-[14px] shadow-md text-xs font-semibold active:scale-95 transition-all"
+              className="flex items-center gap-3 px-4 py-3 bg-white border border-[#E6E0D2] text-[#1B2421] hover:text-[#1F3D36] rounded-[16px] shadow-[0_1px_2px_rgba(27,36,33,0.06),0_6px_16px_rgba(27,36,33,0.08)] text-xs font-semibold active:scale-[0.985] transition-all cursor-pointer"
             >
               <span>Record Visit</span>
-              <div className="w-7 h-7 rounded-[8px] bg-[#B87545]/15 text-[#B87545] flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl bg-[#1F3D36]/10 text-[#1F3D36] flex items-center justify-center">
                 <BookOpen className="w-4 h-4" />
               </div>
             </button>
@@ -60,21 +60,23 @@ export const FloatingActionButton: React.FC<FABProps> = ({
                 setIsOpen(false);
                 onScheduleVisit();
               }}
-              className="flex items-center gap-3 px-4 py-3 bg-[#FCFBF8] border border-[#DCDDD5] text-[#17201E] hover:text-[#183A35] rounded-[14px] shadow-md text-xs font-semibold active:scale-95 transition-all"
+              className="flex items-center gap-3 px-4 py-3 bg-white border border-[#E6E0D2] text-[#1B2421] hover:text-[#1F3D36] rounded-[16px] shadow-[0_1px_2px_rgba(27,36,33,0.06),0_6px_16px_rgba(27,36,33,0.08)] text-xs font-semibold active:scale-[0.985] transition-all cursor-pointer"
             >
               <span>Schedule Visit</span>
-              <div className="w-7 h-7 rounded-[8px] bg-[#B99A62]/20 text-[#6B5528] flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl bg-[#1F3D36]/10 text-[#1F3D36] flex items-center justify-center">
                 <Calendar className="w-4 h-4" />
               </div>
             </button>
           </div>
         )}
 
-        {/* Primary FAB Button (54px diameter, 18px soft radius, Deep Forest) */}
+        {/* Primary FAB Button (56px diameter, 16px radius, Tactile shadow) */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`w-[54px] h-[54px] rounded-[16px] flex items-center justify-center text-white shadow-md active:scale-95 transition-all duration-200 ${
-            isOpen ? 'bg-[#102C29] rotate-45' : 'bg-[#183A35] hover:bg-[#102C29]'
+          className={`w-14 h-14 rounded-[16px] flex items-center justify-center text-white cursor-pointer select-none transition-all duration-150 ${
+            isOpen
+              ? 'bg-[#142823] rotate-45 shadow-[0_1px_0_#0D1B17]'
+              : 'bg-[#1F3D36] shadow-[0_3px_0_#142823,0_8px_24px_rgba(27,36,33,0.18)] active:translate-y-[2px] active:shadow-[0_1px_0_#142823]'
           }`}
           aria-label={isOpen ? 'Close actions menu' : 'Quick mobile actions'}
           aria-expanded={isOpen}
