@@ -193,7 +193,7 @@ export const AppShell: React.FC<AppShellProps> = ({
 
       {/* MOBILE BOTTOM NAVIGATION BAR: 4 Primary Destinations (Home, People, Map, Schedule) */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 bg-[#FCFBF8]/95 backdrop-blur-md border-t border-[#DCDDD5] z-30 flex items-center justify-around px-2 h-16 shadow-lg"
+        className="md:hidden fixed bottom-0 inset-x-0 bg-[#FCFBF8]/95 backdrop-blur-md border-t border-[#DCDDD5] z-40 flex items-center justify-around px-2 h-16 shadow-lg"
         role="navigation"
         aria-label="Mobile Bottom Navigation"
       >

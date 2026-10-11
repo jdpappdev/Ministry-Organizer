@@ -55,6 +55,7 @@ interface TerritoriesViewProps {
   initialSelectedTerritoryId?: string;
   onPreviewPerson?: (person: Person) => void;
   onOpenAddPerson?: (territoryId?: string) => void;
+  onOpenAddTerritoryModal?: (territoryId?: string) => void;
 }
 
 function MapUpdater({ people }: { people: Person[] }) {
@@ -78,12 +79,11 @@ export const TerritoriesView: React.FC<TerritoriesViewProps> = ({
   initialSelectedTerritoryId,
   onPreviewPerson,
   onOpenAddPerson,
+  onOpenAddTerritoryModal,
 }) => {
   const [selectedTerritoryId, setSelectedTerritoryId] = useState<string>(
     initialSelectedTerritoryId || (territories[0]?.id ?? '')
   );
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [territoryToEdit, setTerritoryToEdit] = useState<Territory | null>(null);
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
   const [showPeopleList, setShowPeopleList] = useState(false);
 
@@ -217,10 +217,7 @@ export const TerritoriesView: React.FC<TerritoriesViewProps> = ({
         </div>
 
         <button
-          onClick={() => {
-            setTerritoryToEdit(null);
-            setIsAddModalOpen(true);
-          }}
+          onClick={() => onOpenAddTerritoryModal?.()}
           className="h-12 px-4.5 flex items-center justify-center gap-1.5 text-xs font-semibold text-white bg-[#183A35] hover:bg-[#102C29] active:scale-[0.98] rounded-[12px] transition-all shadow-xs shrink-0"
         >
           <Plus className="w-4 h-4" />
@@ -302,10 +299,7 @@ export const TerritoriesView: React.FC<TerritoriesViewProps> = ({
 
           {/* Edit Territory action */}
           <button
-            onClick={() => {
-              setTerritoryToEdit(selectedTerritory);
-              setIsAddModalOpen(true);
-            }}
+            onClick={() => onOpenAddTerritoryModal?.(selectedTerritory.id)}
             className="p-2 text-[#68716D] hover:text-[#183A35] hover:bg-[#F5F3ED] rounded-[10px] transition-colors shrink-0"
             title="Edit territory details"
             aria-label="Edit territory"
@@ -316,7 +310,7 @@ export const TerritoriesView: React.FC<TerritoriesViewProps> = ({
       )}
 
       {/* 4. PRIMARY MAP CANVAS */}
-      <div className="relative rounded-[20px] bg-[#DDE7E1]/40 border border-[#DCDDD5] overflow-hidden shadow-2xs h-84 sm:h-96 select-none">
+      <div className="relative z-0 rounded-[20px] bg-[#DDE7E1]/40 border border-[#DCDDD5] overflow-hidden shadow-2xs h-84 sm:h-96 select-none">
         <MapContainer
           center={[0, 0]}
           zoom={2}
@@ -467,32 +461,7 @@ export const TerritoriesView: React.FC<TerritoriesViewProps> = ({
         </div>
       )}
 
-      {/* CREATE / EDIT TERRITORY MODAL */}
-      <AddTerritoryModal
-        isOpen={isAddModalOpen}
-        onClose={() => {
-          setIsAddModalOpen(false);
-          setTerritoryToEdit(null);
-        }}
-        territoryToEdit={territoryToEdit}
-        onSave={(newTerr) => {
-          onAddTerritory(newTerr);
-        }}
-        onUpdate={(tId, updates) => {
-          if (onUpdateTerritory) {
-            onUpdateTerritory(tId, updates);
-          }
-        }}
-        onDelete={(tId) => {
-          if (onDeleteTerritory) {
-            onDeleteTerritory(tId);
-            const remaining = territories.filter((t) => t.id !== tId);
-            if (remaining.length > 0) {
-              setSelectedTerritoryId(remaining[0].id);
-            }
-          }
-        }}
-      />
+      {/* CREATE / EDIT TERRITORY MODAL REMOVED - NOW GLOBAL */}
     </div>
   );
 };

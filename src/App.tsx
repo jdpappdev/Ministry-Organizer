@@ -16,6 +16,7 @@ import { GrowthView } from './components/growth/GrowthView';
 import { ActivityView } from './components/activity/ActivityView';
 import { AddPersonModal } from './components/people/AddPersonModal';
 import { AddVisitModal } from './components/visits/AddVisitModal';
+import { AddTerritoryModal } from './components/territories/AddTerritoryModal';
 import { GlobalSearchModal } from './components/search/GlobalSearchModal';
 import { FloatingActionButton } from './components/common/FloatingActionButton';
 import { PersonPreviewSheet } from './components/people/PersonPreviewSheet';
@@ -56,6 +57,8 @@ export default function App() {
   // Modal dialog states
   const [isAddPersonOpen, setIsAddPersonOpen] = useState(false);
   const [isRecordVisitOpen, setIsRecordVisitOpen] = useState(false);
+  const [isAddTerritoryOpen, setIsAddTerritoryOpen] = useState(false);
+  const [territoryToEdit, setTerritoryToEdit] = useState<Territory | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedPersonForAction, setSelectedPersonForAction] = useState<string | undefined>(undefined);
 
@@ -256,6 +259,11 @@ export default function App() {
             setFilterTerritoryId(tId || 'all');
             setIsAddPersonOpen(true);
           }}
+          onOpenAddTerritoryModal={(tId) => {
+            const t = tId ? (getTerritory(tId) || null) : null;
+            setTerritoryToEdit(t);
+            setIsAddTerritoryOpen(true);
+          }}
         />
       )}
 
@@ -363,6 +371,24 @@ export default function App() {
         initialTerritoryId={filterTerritoryId !== 'all' ? filterTerritoryId : undefined}
       />
 
+      <AddTerritoryModal
+        isOpen={isAddTerritoryOpen}
+        onClose={() => {
+          setIsAddTerritoryOpen(false);
+          setTerritoryToEdit(null);
+        }}
+        territoryToEdit={territoryToEdit}
+        onSave={(newTerr) => {
+          handleAddTerritory(newTerr);
+        }}
+        onUpdate={(tId, updates) => {
+          handleUpdateTerritory(tId, updates);
+        }}
+        onDelete={(tId) => {
+          handleDeleteTerritory(tId);
+        }}
+      />
+      
       <AddVisitModal
         isOpen={isRecordVisitOpen}
         onClose={() => {

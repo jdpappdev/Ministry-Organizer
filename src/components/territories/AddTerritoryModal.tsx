@@ -97,7 +97,7 @@ export const AddTerritoryModal: React.FC<AddTerritoryModalProps> = ({
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:items-center sm:p-4 bg-[#102C29]/40 backdrop-blur-xs cursor-default"
+        className="fixed inset-0 z-[9999] flex flex-col justify-end sm:justify-center sm:items-center sm:p-4 bg-[#102C29]/40 backdrop-blur-xs cursor-default"
         onClick={onClose}
       >
         <div
