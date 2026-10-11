@@ -11,6 +11,18 @@ import {
   Clock,
   Navigation,
 } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+let DefaultIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
 import { Territory, Person, PersonLocation, Visit } from '../../types';
 import { TopographicPattern } from '../common/TopographicBackground';
 import { AddTerritoryModal } from './AddTerritoryModal';
@@ -43,6 +55,16 @@ interface TerritoriesViewProps {
   initialSelectedTerritoryId?: string;
   onPreviewPerson?: (person: Person) => void;
   onOpenAddPerson?: (territoryId?: string) => void;
+}
+
+function MapUpdater({ people }: { people: Person[] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (people.length === 0) return;
+    const bounds = L.latLngBounds(people.map(p => [p.location!.latitude, p.location!.longitude]));
+    map.fitBounds(bounds, { padding: [50, 50] });
+  }, [people, map]);
+  return null;
 }
 
 export const TerritoriesView: React.FC<TerritoriesViewProps> = ({
@@ -295,78 +317,35 @@ export const TerritoriesView: React.FC<TerritoriesViewProps> = ({
 
       {/* 4. PRIMARY MAP CANVAS */}
       <div className="relative rounded-[20px] bg-[#DDE7E1]/40 border border-[#DCDDD5] overflow-hidden shadow-2xs h-84 sm:h-96 select-none">
-        <div className="absolute inset-0 contour-lines opacity-35 pointer-events-none" />
-        <TopographicPattern opacity={0.16} />
-
-        {/* Territory Watermark Badge */}
-        {selectedTerritory && (
-          <div className="absolute top-4 left-4 z-10 space-y-0.5 pointer-events-none">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#183A35] bg-white/90 backdrop-blur-xs px-2 py-0.5 rounded-[6px] border border-[#DCDDD5] shadow-2xs">
-              {selectedTerritory.code ? `TERRITORY ${selectedTerritory.code}` : 'TERRITORY'}
-            </span>
-            <div className="font-display font-bold text-lg text-[#17201E] drop-shadow-xs">
-              {selectedTerritory.name}
-            </div>
-          </div>
-        )}
-
-        {/* Map Legend Controls */}
-        <div className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-xs border border-[#DCDDD5] rounded-[10px] p-2 text-[10px] space-y-1 shadow-2xs">
-          <div className="flex items-center gap-1.5 text-[#183A35] font-medium">
-            <span className="w-2 h-2 rounded-full bg-[#183A35]" />
-            <span>Active</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-[#B87545] font-medium">
-            <span className="w-2 h-2 rounded-full bg-[#B87545]" />
-            <span>Attention</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-[#B99A62] font-medium">
-            <span className="w-2 h-2 rounded-full bg-[#B99A62]" />
-            <span>Scheduled</span>
-          </div>
-        </div>
-
-        {/* MAPPED PINS */}
-        {pins.map(({ person, x, y }) => {
-          const isSelected = selectedPinId === person.id;
-          const pinColor =
-            person.status === 'active'
-              ? 'bg-[#183A35] ring-[#183A35]/25'
-              : person.status === 'needs_attention'
-              ? 'bg-[#B87545] ring-[#B87545]/25'
-              : person.status === 'scheduled'
-              ? 'bg-[#B99A62] ring-[#B99A62]/25'
-              : 'bg-[#68716D] ring-[#68716D]/25';
-
-          return (
-            <button
+        <MapContainer
+          center={[0, 0]}
+          zoom={2}
+          className="h-full w-full"
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <MapUpdater people={mappedPeople} />
+          {mappedPeople.map((person) => (
+            <Marker
               key={person.id}
-              onClick={() => {
-                setSelectedPinId(person.id);
-                if (onPreviewPerson) {
-                  onPreviewPerson(person);
-                } else {
-                  onSelectPerson(person.id);
-                }
+              position={[person.location!.latitude, person.location!.longitude]}
+              eventHandlers={{
+                click: () => {
+                  setSelectedPinId(person.id);
+                  if (onPreviewPerson) {
+                    onPreviewPerson(person);
+                  } else {
+                    onSelectPerson(person.id);
+                  }
+                },
               }}
-              style={{ left: `${x}%`, top: `${y}%` }}
-              className={`absolute -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center group cursor-pointer p-2 -m-2 active:scale-95 transition-all ${
-                isSelected ? 'scale-110 z-30' : ''
-              }`}
-              aria-label={`View ${person.name}`}
             >
-              <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center text-white ring-4 shadow-md transition-all ${pinColor}`}
-              >
-                <MapPin className="w-4 h-4" />
-              </div>
-              <span className="mt-1 px-1.5 py-0.5 text-[10px] font-semibold tracking-tight text-[#17201E] bg-white/95 backdrop-blur-xs rounded-[6px] border border-[#DCDDD5] shadow-2xs whitespace-nowrap">
-                {person.name.split(' ')[0]}
-              </span>
-            </button>
-          );
-        })}
-
+              <Popup>{person.name}</Popup>
+            </Marker>
+          ))}
+        </MapContainer>
         {/* EMPTY / UNMAPPED TERRITORY STATES */}
         {territoryPeople.length === 0 ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center space-y-3 bg-[#FCFBF8]/75 backdrop-blur-2xs z-15">
